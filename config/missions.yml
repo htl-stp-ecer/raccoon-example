@@ -1,0 +1,4 @@
+- M00SetupMission: setup
+- M01NavigateToObjectMission
+- M02CollectObjectMission
+- M03DeliverObjectMission
