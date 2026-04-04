@@ -25,7 +25,7 @@ class M01NavigateToObjectMission(Mission):
             parallel(
                 drive_forward(cm=40),
                 seq([
-                    wait_for_seconds(0.5),       # let the drive settle first
+                    wait_until_distance(7),       # let the drive settle first
                     Defs.arm_servo.hold(),        # arm to horizontal mid-point
                 ]),
             ),
@@ -33,7 +33,7 @@ class M01NavigateToObjectMission(Mission):
             # Turn to face the pick-up zone
             turn_right(degrees=90),
 
-            # Follow the line until both front sensors see black,
+            # Drive forward until both front sensors see black,
             # meaning we have reached the target marker.
             drive_forward().until(
                 on_black(Defs.front.left) & on_black(Defs.front.right)
