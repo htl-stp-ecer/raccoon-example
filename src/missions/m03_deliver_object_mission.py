@@ -34,7 +34,10 @@ class M03DeliverObjectMission(Mission):
                 Defs.arm_servo.down(),
             ),
 
-            turn_to_heading_left(0), # Returns to the marked heading in the previou s mission to ensure we have the same angle as before
+            # Returns to the marked heading in the previou s mission to ensure we have the same angle as before
+            # This doesnt turn in the left direction - It always turns the shortest path (unless specified differently; see docs)
+            # The left means: from the heading we marked as reference, we go left by X degrees
+            turn_to_heading_left(0),
 
             # Deposit the object, then retract the arm for safe travel
             release_object(),
