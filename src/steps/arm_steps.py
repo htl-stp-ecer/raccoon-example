@@ -9,14 +9,18 @@ from src.hardware.defs import Defs
 # lets the same sequence be reused across multiple missions without duplication.
 
 
+@dsl # This is OPTIONAL! It is needed for the WebIDE to discover the step
 def grab_object() -> Sequential:
     """Lower the arm, open the claw, close onto the object, then lift."""
     return seq([
-        Defs.arm_servo.down(),
-        Defs.claw_servo.open(),
-        wait_for_seconds(0.2),   # settle before gripping
-        Defs.claw_servo.closed(),
-        wait_for_seconds(0.1),   # let the claw lock
+        # In the servos.yml you can define the positions - they will get converted to python callable functions by codegen
+        parallel(
+            Defs.arm_servo.down(), # These steps will wait until the servo is down
+            Defs.claw_servo.open(),
+        ),
+
+        # Specifing a number in the close command makes the servo try to move at this degrees per seconds - In this case 30°/s; acting as a 'slow_servo' function
+        Defs.claw_servo.closed(30),
         Defs.arm_servo.hold(),   # lift to travel height
     ])
 
@@ -26,7 +30,7 @@ def release_object() -> Sequential:
     return seq([
         Defs.arm_servo.down(),
         Defs.claw_servo.open(),
-        wait_for_seconds(0.2),   # give the object time to fall clear
+        # Again - no wait needed cause the servo step will finish on
         Defs.arm_servo.up(),
     ])
 
@@ -60,7 +64,6 @@ def safe_arm_lower() -> Defer:
         info(f"Lowering arm from {current_angle:.1f}° → {_ARM_HOLD_DEG}°")
         return seq([
             Defs.arm_servo.hold(),
-            wait_for_seconds(0.1),
         ])
 
     return defer(_build)
