@@ -80,14 +80,6 @@ See [Getting Started](https://htl-stp-ecer.github.io/documentation/00-quick-star
 
 ---
 
-## Why This Exists
-
-The competition robots ([drumbot](https://gitlab.com/fallgame2025/drumbot), [conebot](https://gitlab.com/fallgame2025/conebot), [packingbot](https://gitlab.com/fallgame2025/packingbot)) are great for seeing what the platform can do at full scale — but they accumulated complexity under competition pressure. Reading them cold as a new team is hard.
-
-This repo is the thing those robots would have looked like if written for clarity from the start.
-
----
-
 ## Related Repositories
 
 | Repository | What it is |
