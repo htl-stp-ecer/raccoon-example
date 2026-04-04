@@ -23,6 +23,7 @@ class M00SetupMission(SetupMission):
             # white surface. distance_cm controls how far it drives for each.
             calibrate(distance_cm=50),
 
-            # Wait for the human player to press start
-            wait_for_button(),
+            # Wait for the human to press the button -> Handled automatically
+            #- wait for light if light sensor is available
+            #- wait for button if dev mode or no WFL sensor found
         ])
