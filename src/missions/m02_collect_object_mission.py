@@ -22,8 +22,9 @@ class M02CollectObjectMission(Mission):
             grab_object(),
 
             # Square up against the back wall before navigating to delivery.
+            # This uses the accelerometer to drive into the wall and stop as soon as it's hit. Threshold tuning needed. Different robot weights affect this.
             # This resets any heading error accumulated during collection.
-            wall_align_backward(speed=0.5, accel_threshold=0.3),
+            wall_align_backward(accel_threshold=0.3),
             mark_heading_reference(),
 
             # Turn to face the delivery zone
