@@ -17,7 +17,8 @@ class M01NavigateToObjectMission(Mission):
     def sequence(self) -> Sequential:
         return seq([
             # Record the current IMU heading as 0°. All subsequent
-            # turn_to_heading() calls are relative to this reference.
+            # turn_to_heading_left() calls are relative to this reference.
+            # Absolute heading with this firmware is basically drift-free -> Over 2 minutes of action, the heading only drifted for 6 degrees!
             mark_heading_reference(),
 
             # Approach the line while lowering the arm in parallel so we
