@@ -9,17 +9,17 @@ class M03DeliverObjectMission(Mission):
     Navigate to the delivery zone and deposit the object.
 
     Demonstrates:
-      - Line following with strafe_follow_line_single()
+      - Line following with follow_line_single()
       - Combining a stop condition from distance AND a sensor trigger
       - Running arm motion in parallel with the final approach
     """
 
     def sequence(self) -> Sequential:
         return seq([
-            # Follow the left-side line to the delivery zone.
+            # Follow the left-side line to the delivery zone with a single sensor.
             # Stop when the rear sensor sees black (cross-tape marker) AND
             # at least 20 cm have been covered (avoids early false triggers).
-            strafe_follow_line_single(
+            follow_line_single(
                 Defs.front.left,
                 speed=0.8,
                 side=LineSide.LEFT,
@@ -33,6 +33,8 @@ class M03DeliverObjectMission(Mission):
                 drive_forward(cm=10),
                 Defs.arm_servo.down(),
             ),
+
+            turn_to_heading_left(0), # Returns to the marked heading in the previou s mission to ensure we have the same angle as before
 
             # Deposit the object, then retract the arm for safe travel
             release_object(),
