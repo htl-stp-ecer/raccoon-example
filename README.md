@@ -87,3 +87,8 @@ See [Getting Started](https://htl-stp-ecer.github.io/documentation/00-quick-star
 | [raccoon-lib](https://github.com/htl-stp-ecer/raccoon-lib) | The core library this code runs on |
 | [raccoon-cli](https://github.com/htl-stp-ecer/raccoon-cli) | `raccoon run`, `raccoon create`, hardware wizard |
 | [documentation](https://github.com/htl-stp-ecer/documentation) | Full platform docs |
+
+## License
+
+Copyright (C) 2026 Tobias Madlberger  
+Licensed under the GNU General Public License v3.0 — see [COPYING](COPYING) for details.
