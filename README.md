@@ -97,9 +97,21 @@ See [Getting Started](https://raccoon-docs.pages.dev/00-quick-start) if this is 
 
 ## Adapting to Your Robot
 
-The recommended way to tune the robot for your hardware is `raccoon calibrate` — it runs a
-fully automatic characterization sweep and writes all measured values (motor encoder resolution,
-velocity feed-forward, motion constraints) directly into your config files.
+### Hardware setup (`raccoon wizard`)
+
+Use `raccoon wizard` to configure your robot's physical hardware — drivetrain type, wheel
+diameter, wheelbase, motor ports, sensors, and servos. It walks you through each setting
+interactively and writes the result into your `config/` YAML files.
+
+```bash
+raccoon wizard
+```
+
+### Performance tuning (`raccoon calibrate`)
+
+Once the hardware is configured, run `raccoon calibrate` for a fully automatic
+characterization sweep. It measures motor encoder resolution, velocity feed-forward,
+and motion constraints, then writes all values directly into your config files.
 
 ```bash
 raccoon calibrate
