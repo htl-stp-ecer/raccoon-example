@@ -97,36 +97,31 @@ See [Getting Started](https://raccoon-docs.pages.dev/00-quick-start) if this is 
 
 ## Adapting to Your Robot
 
-The config values in this example target a specific test robot. Before running on your own Wombat, adjust two things:
+The recommended way to tune the robot for your hardware is `raccoon calibrate` — it runs a
+fully automatic characterization sweep and writes all measured values (motor encoder resolution,
+velocity feed-forward, motion constraints) directly into your config files.
 
-### Motor encoder calibration (`config/motors.yml`)
-
-`ticks_to_rad` converts raw encoder ticks to wheel radians:
-
-```
-ticks_to_rad = (2 × π) / ticks_per_revolution
+```bash
+raccoon calibrate
 ```
 
-To measure `ticks_per_revolution`:
-1. Open BotUI → Sensors (or SSH and read the encoder position directly).
-2. Note the reading, then manually rotate the **wheel** (not the motor shaft) one full turn.
-3. The difference is `ticks_per_revolution`.
-4. Compute `ticks_to_rad = 6.2832 / ticks_per_revolution`.
+That's it. No manual YAML editing required.
 
-For raccoonOS motors the result is typically around **1.7 × 10⁻⁵**.
+### Motor encoder calibration (`config/motors.yml`) — optional
 
-> **Common mistake:** entering the raw tick count (e.g. `400000`) directly as `ticks_to_rad`
-> instead of computing `2π / 400000 ≈ 1.57e-05`. With the wrong value the controller thinks
-> every tick moves the wheel by hundreds of thousands of radians and the robot will not move.
+The `ticks_to_rad` values in `motors.yml` are a close baseline for raccoonOS motors and
+**do not need to be measured manually**. The `calibrate()` call inside `m00_setup_mission.py`
+auto-corrects small deviations at the start of every run, so inaccurate defaults will not
+affect your robot's actual driving performance.
+
+You only need to touch `ticks_to_rad` if your motors are significantly different from the
+reference hardware (e.g. a custom gearbox). In that case `raccoon calibrate` handles it.
 
 ### Motion constraints (`config/robot.yml`)
 
 The `linear` / `angular` blocks under `motion_pid` set top speed and braking profile.
 **These must not be zero** — a missing or zero `max_velocity` makes the robot sit still
-even when commanded to move.
-
-Run `raccoon calibrate` to measure accurate values for your drivetrain and have them
-written automatically into `robot.yml`.
+even when commanded to move. `raccoon calibrate` measures and writes these for you.
 
 ---
 
@@ -142,7 +137,10 @@ written automatically into `robot.yml`.
 
 ## License
 
-MIT — see [LICENSE](LICENSE) for details.
+The example code in this repository is MIT licensed — see [LICENSE](LICENSE).
 
-You can freely use, copy, and modify this example for your competition robot
-**without having to publish your own code**.
+You can freely use, modify, and build on it for your competition robot
+**without having to publish your own robot code based on this repo**.
+
+> [raccoon-lib](https://github.com/htl-stp-ecer/raccoon-lib) and the rest of the RaccoonOS
+> platform are GPL v3 — modifications to the library itself must be shared under the same terms.
