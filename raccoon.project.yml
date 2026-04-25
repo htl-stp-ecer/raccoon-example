@@ -1,0 +1,7 @@
+name: ExampleBot
+uuid: b1845bac-ce82-45e7-aa37-f9f4df6c119f
+
+robot: !include 'config/robot.yml'
+missions: !include 'config/missions.yml'
+definitions: !include 'config/hardware.yml'
+connection: !include 'config/connection.yml'

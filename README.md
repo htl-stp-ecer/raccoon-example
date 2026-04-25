@@ -135,5 +135,7 @@ Run `raccoon calibrate` to measure accurate values for your drivetrain and have 
 
 ## License
 
-Copyright (C) 2026 Tobias Madlberger  
-Licensed under the GNU General Public License v3.0 — see [COPYING](COPYING) for details.
+MIT — see [LICENSE](LICENSE) for details.
+
+This means you can freely use, copy, and modify this example for your competition robot
+**without having to publish your own code**.

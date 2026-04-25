@@ -3,8 +3,8 @@
 # ticks_to_rad: how many radians one encoder tick represents.
 #   Formula: ticks_to_rad = (2 * pi) / ticks_per_revolution
 #   Ticks per revolution = raw encoder ticks observed when the WHEEL (not motor shaft)
-#   completes one full rotation. For Wombat motors this is typically ~330 000 – 420 000,
-#   giving ticks_to_rad values in the range 1.5e-05 – 1.9e-05.
+#   completes one full rotation. For raccoonOS motors this is typically ~360 000 – 420 000,
+#   giving ticks_to_rad values in the range 1.5e-05 – 1.75e-05.
 #
 #   Common mistake: entering the raw tick count (e.g. 400000) as ticks_to_rad
 #   instead of computing 2π/400000 ≈ 1.57e-05. That makes the controller think
@@ -25,7 +25,7 @@ left_motor:
   port: 0
   inverted: false
   calibration:
-    ticks_to_rad: 1.862e-05   # 2π / ~337 000 ticks/rev — measure for your robot
+    ticks_to_rad: 1.741e-05   # 2π / ~361 000 ticks/rev — measure for your robot
     vel_lpf_alpha: 1.0
 
 right_motor:
@@ -33,5 +33,5 @@ right_motor:
   port: 1
   inverted: true              # right motor faces opposite direction → invert
   calibration:
-    ticks_to_rad: 1.594e-05   # 2π / ~394 000 ticks/rev — slight asymmetry is normal
+    ticks_to_rad: 1.712e-05   # 2π / ~367 000 ticks/rev — slight asymmetry between motors is normal
     vel_lpf_alpha: 1.0
