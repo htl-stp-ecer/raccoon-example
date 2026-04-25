@@ -84,7 +84,7 @@ examplebot/
 ```bash
 # Clone and enter the project
 git clone https://github.com/htl-stp-ecer/raccoon-example.git
-cd raccoon-example/examplebot
+cd raccoon-example
 
 # Connect to your Wombat and run
 raccoon connect <PI_ADDRESS>
