@@ -141,6 +141,3 @@ The example code in this repository is MIT licensed — see [LICENSE](LICENSE).
 
 You can freely use, modify, and build on it for your competition robot
 **without having to publish your own robot code based on this repo**.
-
-> [raccoon-lib](https://github.com/htl-stp-ecer/raccoon-lib) and the rest of the RaccoonOS
-> platform are GPL v3 — modifications to the library itself must be shared under the same terms.
