@@ -1,11 +1,26 @@
-shutdown_in: 120
+shutdown_in: 120   # seconds until the program auto-exits (prevents runaway robots)
+
 drive:
   kinematics:
     type: differential
-    wheel_radius: 0.0345
-    wheelbase: 0.16
+    wheel_radius: 0.0345   # metres — measure with calipers
+    wheelbase: 0.16        # metres — distance between left and right wheel contact points
     left_motor: left_motor
     right_motor: right_motor
+
+  # Chassis-level velocity controller.
+  # These values are produced by `raccoon calibrate` — run it once per robot to
+  # characterise your drivetrain and write accurate values here.
+  #
+  # The controller output is corrected chassis velocity (same units as input):
+  #   vx in m/s, vy in m/s, wz in rad/s.
+  # It is NOT a raw motor duty cycle — do not set kV to a large number.
+  #
+  # Good starting defaults until you calibrate:
+  #   ff.kS = 0.0  (static friction offset; calibrate sets this to ~0.05–0.15)
+  #   ff.kV = 1.0  (gain; leave at 1.0 — the STM32 handles actual motor PID)
+  #   ff.kA = 0.0  (acceleration feed-forward; rarely needed)
+  #   pid all 0.0  (add a small kp only if straight-line drift is noticeable)
   vel_config:
     vx:
       pid:
@@ -13,10 +28,10 @@ drive:
         ki: 0.0
         kd: 0.0
       ff:
-        kS: 0.0
+        kS: 0.0   # set by raccoon calibrate
         kV: 1.0
         kA: 0.0
-    vy:
+    vy:           # unused for differential drive (robot cannot move sideways)
       pid:
         kp: 0.0
         ki: 0.0
@@ -31,13 +46,17 @@ drive:
         ki: 0.0
         kd: 0.0
       ff:
-        kS: 0.0
+        kS: 0.0   # set by raccoon calibrate
         kV: 1.0
         kA: 0.0
+
 odometry:
   type: FusedOdometry
   config:
-    bemf_trust: 1.0
+    bemf_trust: 1.0   # 1.0 = trust encoders fully; lower if IMU heading is more reliable
+
+# High-level motion PID — controls how drive_cm / turn_deg steps follow their
+# distance and heading targets. Tune these if the robot overshoots or oscillates.
 motion_pid:
   distance:
     kp: 3.0
@@ -58,8 +77,10 @@ motion_pid:
     output_min: -10.0
     output_max: 10.0
   velocity_ff: 1.0
-  distance_tolerance_m: 0.005
-  angle_tolerance_rad: 0.017
+  distance_tolerance_m: 0.005      # stop when within 5 mm of target
+  angle_tolerance_rad: 0.017       # stop when within ~1° of target heading
+
+  # Saturation handling — prevents integral windup when motors hit their limits.
   saturation_derating_factor: 0.85
   saturation_min_scale: 0.2
   saturation_recovery_rate: 0.02
@@ -70,18 +91,27 @@ motion_pid:
   heading_recovery_rate: 0.05
   heading_saturation_error_rad: 0.01
   heading_recovery_error_rad: 0.005
+
+  # Motion constraints — REQUIRED. The robot cannot move if these are zero or missing.
+  # max_velocity: top speed in m/s (linear) or rad/s (angular)
+  # acceleration: how fast to ramp up to max speed (m/s² or rad/s²)
+  # deceleration: how fast to slow down before reaching the target (m/s² or rad/s²)
+  #
+  # These values were measured for a standard Wombat + two DC motors.
+  # Run `raccoon calibrate` to compute accurate values for your robot.
   linear:
-    max_velocity: 0.24
-    acceleration: 0.28
-    deceleration: 2.05
+    max_velocity: 0.24    # m/s  (~24 cm/s)
+    acceleration: 0.28    # m/s²
+    deceleration: 2.05    # m/s² — higher than accel for precise stopping
   lateral:
-    max_velocity: 0.0
+    max_velocity: 0.0     # differential drive cannot strafe
     acceleration: 0.0
     deceleration: 0.0
   angular:
-    max_velocity: 2.0
-    acceleration: 3.0
-    deceleration: 3.0
+    max_velocity: 2.0     # rad/s (~115°/s)
+    acceleration: 3.0     # rad/s²
+    deceleration: 3.0     # rad/s²
+
 physical:
   width_cm: 18.0
   length_cm: 22.0

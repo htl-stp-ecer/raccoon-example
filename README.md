@@ -80,6 +80,51 @@ See [Getting Started](https://htl-stp-ecer.github.io/documentation/00-quick-star
 
 ---
 
+## Adapting to Your Robot
+
+The config values in this example target a specific test robot. Before running on your own Wombat you should adjust two things:
+
+### 1 — Motor encoder calibration (`config/motors.yml`)
+
+`ticks_to_rad` converts raw encoder ticks to radians:
+
+```
+ticks_to_rad = (2 × π) / ticks_per_revolution
+```
+
+To measure `ticks_per_revolution`:
+1. Open BotUI → Sensors (or SSH and read position directly).
+2. Note the encoder reading, then manually rotate the **wheel** (not the motor shaft) one full turn.
+3. The difference is `ticks_per_revolution`.
+4. Compute `ticks_to_rad = 6.2832 / ticks_per_revolution`.
+
+For standard Wombat motors the result is typically in the range **1.5 × 10⁻⁵ – 1.9 × 10⁻⁵**.
+
+> **Common mistake:** entering the raw tick count (e.g. `400000`) as `ticks_to_rad` instead
+> of computing `2π / 400000 ≈ 1.57e-05`. With the wrong value the controller thinks every
+> tick moves the wheel by hundreds of thousands of radians and the robot will not move.
+
+### 2 — Motion constraints (`config/robot.yml`)
+
+The `linear` / `angular` blocks under `motion_pid` define top speed, ramp-up, and braking:
+
+```yaml
+linear:
+  max_velocity: 0.24    # m/s
+  acceleration: 0.28    # m/s²
+  deceleration: 2.05    # m/s²
+angular:
+  max_velocity: 2.0     # rad/s
+  acceleration: 3.0     # rad/s²
+  deceleration: 3.0     # rad/s²
+```
+
+**These must not be zero** — a missing or zero `max_velocity` makes the robot sit still even when commanded to move.
+
+Run `raccoon calibrate` to measure accurate values for your drivetrain and have them written automatically into `robot.yml`.
+
+---
+
 ## Related Repositories
 
 | Repository | What it is |
