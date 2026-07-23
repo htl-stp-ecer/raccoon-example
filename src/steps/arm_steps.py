@@ -1,27 +1,29 @@
-from libstp import *
+from raccoon import *
 
 from src.hardware.defs import Defs
 
 # ── Composite arm steps ───────────────────────────────────────────────────────
 #
-# These functions return a Sequential (a seq([...])) rather than a single step.
-# Wrapping multi-step arm sequences here keeps mission files concise and
-# lets the same sequence be reused across multiple missions without duplication.
+# These functions return a Sequential (a seq([...])), not a single step. Wrapping
+# multi-step arm sequences here keeps mission files short and lets the same motion
+# be reused across missions without copy-paste.
 
 
-@dsl # This is OPTIONAL! It is needed for the WebIDE to discover the step
+@dsl  # OPTIONAL — only needed so the WebIDE can discover this step in its palette.
 def grab_object() -> Sequential:
     """Lower the arm, open the claw, close onto the object, then lift."""
     return seq([
-        # In the servos.yml you can define the positions - they will get converted to python callable functions by codegen
+        # Servo positions are defined in config/servos.yml and become callable
+        # steps via codegen. A servo step waits until the move is estimated done.
         parallel(
-            Defs.arm_servo.down(), # These steps will wait until the servo is down
+            Defs.arm_servo.down(),  # waits until the arm reaches "down"
             Defs.claw_servo.open(),
         ),
 
-        # Specifing a number in the close command makes the servo try to move at this degrees per seconds - In this case 30°/s; acting as a 'slow_servo' function
+        # Passing a number = degrees/second → eased ("slow") motion. Here 30°/s so
+        # the claw closes gently onto the object instead of snapping shut.
         Defs.claw_servo.closed(30),
-        Defs.arm_servo.hold(),   # lift to travel height
+        Defs.arm_servo.hold(),  # lift to travel height
     ])
 
 
@@ -30,36 +32,32 @@ def release_object() -> Sequential:
     return seq([
         Defs.arm_servo.down(),
         Defs.claw_servo.open(),
-        # Again - no wait needed cause the servo step will finish on
-        Defs.arm_servo.up(),
+        Defs.arm_servo.up(),  # no explicit wait needed — the servo step blocks
     ])
 
 
 # ── Advanced: deferred step ───────────────────────────────────────────────────
 #
-# Use defer() when the step sequence cannot be determined until runtime —
-# for example, when it depends on the current servo angle or a sensor value.
-#
-# The factory function receives the robot instance and returns a step.
-# This is identical to the pattern used in drum_lifting_step.py.
+# Use defer() when the sequence can't be decided until runtime — e.g. it depends
+# on a live servo angle or a sensor reading. The factory receives the robot and
+# returns the step to run, evaluated at execution time (not when the mission is
+# built). Logging here (info/debug) lands in the run log with this file + line.
 
-_ARM_HOLD_DEG = 90   # must match the "hold" value in Defs.arm_servo
+_ARM_HOLD_DEG = 90  # must match the "hold" position in Defs.arm_servo
 
 
 def safe_arm_lower() -> Defer:
-    """
-    Lower the arm only if it is currently above the hold position.
+    """Lower the arm only if it is currently above the hold position.
 
-    This avoids driving the servo into a hard stop when the arm is already
-    at or below mid-travel — useful when the previous mission may have left
-    the arm in an uncertain state.
+    Avoids driving the servo into a hard stop when the arm is already at or below
+    mid-travel — useful when a previous mission left the arm in an unknown state.
     """
-    def _build(_):
+    def _build(_robot):
         current_angle = Defs.arm_servo.get_position()
 
         if current_angle <= _ARM_HOLD_DEG:
             info(f"Arm already at {current_angle:.1f}° — skipping lower")
-            return seq([])                    # no-op: arm is already low enough
+            return seq([])  # no-op: arm is already low enough
 
         info(f"Lowering arm from {current_angle:.1f}° → {_ARM_HOLD_DEG}°")
         return seq([

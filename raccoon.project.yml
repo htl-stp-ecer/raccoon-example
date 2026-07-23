@@ -1,7 +1,28 @@
+# ── Project entry point ───────────────────────────────────────────────────────
+# `raccoon` reads this file first. It ties together every config file under
+# config/ and gives the project its stable identity (name + uuid). The uuid is
+# how the Wombat knows which on-device folder belongs to this project — never
+# change it once a robot has been deployed.
 name: ExampleBot
 uuid: b1845bac-ce82-45e7-aa37-f9f4df6c119f
 
-robot: !include 'config/robot.yml'
-missions: !include 'config/missions.yml'
-definitions: !include 'config/hardware.yml'
-connection: !include 'config/connection.yml'
+# format_version 2 is the current project schema (run-configurations, services,
+# scoped calibration profiles). Older projects without this line are read as v1.
+format_version: 2
+
+# auto_checkpoints inserts an implicit "wait for button" between missions so you
+# can reposition the robot by hand while debugging. Turn it on for bring-up,
+# off for a real competition run where missions must chain without stopping.
+auto_checkpoints: false
+
+# Each section is split into its own file so diffs stay small and readable.
+robot:              !include config/robot.yml
+missions:           !include config/missions.yml
+definitions:        !include config/hardware.yml
+connection:         !include config/connection.yml
+run_configurations: !include config/run-configurations.yml
+
+# Named run configurations that should NOT appear in the BotUI picker.
+# `raccoon run` still accepts them by name; they are just hidden from the list.
+hidden_run_configurations:
+  - default

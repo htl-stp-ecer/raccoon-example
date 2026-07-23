@@ -1,0 +1,81 @@
+# ── Run configurations ────────────────────────────────────────────────────────
+# A run configuration is a named bundle of flags + environment variables for
+# `raccoon run`. Instead of remembering long flag combinations, pick a profile:
+#
+#     raccoon run                # uses the `default` profile
+#     raccoon run --config dev   # fast iteration, skips checkpoints
+#
+# Flags (all boolean unless noted):
+#   dev             enable dev mode  → button start instead of light start
+#   no_calibrate    skip the calibration steps in the setup mission
+#   no_checkpoints  skip the auto "wait for button" between missions
+#   no_codegen      reuse the last generated defs.py/robot.py (faster upload)
+#   no_sync         do not pull run artifacts (logs) back after the run
+#   record_localization  record pose to localization.jsonl for replay
+#   target          which device to run on ("auto" = the connected Wombat)
+#   env             extra environment variables passed to the program
+#
+# Environment variables read by the raccoon runtime itself:
+#   RACCOON_CMD_TRACE=1   dump every low-level SPI command to cmd_trace.jsonl
+#   RACCOON_PROFILE=1     write per-mission timing to profile.<Mission>.json
+#   RACCOON_PLATFORM      force "wombat" or "mock" (auto-detected otherwise)
+
+default:
+  name: default
+  description: 'Full competition run: calibrate, checkpoints, light start.'
+  target: auto
+  dev: false
+  no_calibrate: false
+  no_checkpoints: false
+  no_codegen: false
+  no_sync: false
+  record_localization: false
+  record_hz:
+  args: []
+  env: {}
+
+dev:
+  name: dev
+  description: 'Fast iteration: button start, no checkpoints, still calibrates.'
+  target: auto
+  dev: true
+  no_calibrate: false
+  no_checkpoints: true
+  no_codegen: false
+  no_sync: false
+  record_localization: false
+  record_hz:
+  args: []
+  env:
+    EXAMPLEBOT_VERBOSE: '1'
+
+dev-nc:
+  name: dev-nc
+  description: 'Fastest loop: button start, no calibration, no checkpoints.'
+  target: auto
+  dev: true
+  no_calibrate: true
+  no_checkpoints: true
+  no_codegen: false
+  no_sync: false
+  record_localization: false
+  record_hz:
+  args: []
+  env:
+    EXAMPLEBOT_VERBOSE: '1'
+
+profile:
+  name: profile
+  description: 'Full run with SPI command tracing + per-mission profiling.'
+  target: auto
+  dev: false
+  no_calibrate: false
+  no_checkpoints: false
+  no_codegen: false
+  no_sync: false
+  record_localization: true
+  record_hz:
+  args: []
+  env:
+    RACCOON_CMD_TRACE: '1'
+    RACCOON_PROFILE: '1'

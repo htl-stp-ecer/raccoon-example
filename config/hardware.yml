@@ -1,13 +1,41 @@
-button:
+# ── Hardware definitions ──────────────────────────────────────────────────────
+# Every device wired to the Wombat is declared here by name. `raccoon run`
+# codegens these into src/hardware/defs.py (the `Defs` class) so mission code
+# can refer to them as `Defs.button`, `Defs.front`, `Defs.arm_servo`, etc.
+#
+# The `type:` decides which class is generated. `port:` is the Wombat port.
+# Motors and servos live in their own files (merged in at the bottom) because
+# they carry calibration data that changes often.
+
+# ── Digital / analog inputs ───────────────────────────────────────────────────
+button:                       # physical start button
   type: DigitalSensor
   port: 10
-imu:
+
+imu:                          # onboard inertial measurement unit (heading)
   type: IMU
+
+wait_for_light_sensor:        # tournament light-start sensor (analog)
+  type: AnalogSensor
+  port: 5
+
+# ── Line sensors ──────────────────────────────────────────────────────────────
+# Two downward-facing reflectance sensors at the front of the chassis.
 front_left_ir_sensor:
   type: IRSensor
   port: 1
 front_right_ir_sensor:
   type: IRSensor
   port: 2
+
+# A SensorGroup bundles a left/right pair so missions can call line helpers on
+# the group (Defs.front.left / Defs.front.right, follow_line, lineup, ...).
+front:
+  type: SensorGroup
+  left: front_left_ir_sensor
+  right: front_right_ir_sensor
+
+# Motors (motors.yml) and servos (servos.yml) are merged in as if written here.
+# `!include-merge` splices the file's top-level keys directly into this mapping.
 _motors: !include-merge 'motors.yml'
 _servos: !include-merge 'servos.yml'

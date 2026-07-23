@@ -1,45 +1,46 @@
-from libstp import *
+from raccoon import *
 
 from src.hardware.defs import Defs
+from src.mission_params import MissionParams
 
 
 class M01NavigateToObjectMission(Mission):
-    """
-    Drive from the start position to the object pick-up zone.
+    """Drive from the start position to the object pick-up zone.
 
     Demonstrates:
       - mark_heading_reference() to lock a compass heading
-      - turn_right() / drive_forward() for basic manoeuvring
-      - drive_forward().until() with a sensor-based stop condition
+      - reading a table-side parameter with MissionParams.<name>.get()
       - parallel() to move the arm while driving
+      - drive_forward(until=...) with a compound stop condition
     """
 
     def sequence(self) -> Sequential:
         return seq([
-            # Record the current IMU heading as 0°. All subsequent
-            # turn_to_heading_left() calls are relative to this reference.
-            # Absolute heading with this firmware is basically drift-free -> Over 2 minutes of action, the heading only drifted for 6 degrees!
+            # Record the current IMU heading as 0°. Every later turn_to_heading_*
+            # call is relative to this reference. Absolute heading on this firmware
+            # is nearly drift-free — ~6° over a full 2-minute match.
             mark_heading_reference(),
 
-            # Approach the line while lowering the arm in parallel so we
-            # arrive ready to pick up — no wasted time at the destination.
+            # Approach while lowering the arm in parallel, so we arrive ready to
+            # pick up — no wasted time at the destination. The drive distance comes
+            # from the setup-time parameter, so it can be trimmed at the table.
             parallel(
-                drive_forward(cm=40),
+                drive_forward(cm=MissionParams.approach_distance.get()),
                 seq([
-                    wait_until_distance(7),       # let the drive settle first
-                    Defs.arm_servo.hold(),        # arm to horizontal mid-point
+                    wait_until_distance(7),  # let the drive settle first
+                    Defs.arm_servo.hold(),   # arm to horizontal mid-point
                 ]),
             ),
 
-            # Turn to face the pick-up zone
+            # Turn to face the pick-up zone.
             turn_right(degrees=90),
 
-            # Drive forward until both front sensors see black,
-            # meaning we have reached the target marker.
-            drive_forward().until(
-                on_black(Defs.front.left) & on_black(Defs.front.right)
+            # Creep forward until BOTH front sensors see black (the target marker).
+            # `&` = AllOf: both conditions must hold at the same instant.
+            drive_forward(
+                until=on_black(Defs.front.left) & on_black(Defs.front.right)
             ),
 
-            # Back up slightly so the arm can reach the object cleanly
+            # Back up slightly so the arm can reach the object cleanly.
             drive_backward(cm=3),
         ])

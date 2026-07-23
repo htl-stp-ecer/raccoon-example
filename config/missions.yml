@@ -1,4 +1,16 @@
+# ── Mission list ──────────────────────────────────────────────────────────────
+# Order matters: this is the sequence the robot runs in. Each entry maps a
+# mission class (in src/missions/) to an optional role.
+#
+#   - Name: setup      → runs ONCE before the match (calibration, servo homing)
+#   - Name             → a normal mission, advanced to by button / checkpoint
+#   - Name: shutdown   → runs automatically when `shutdown_in` elapses, or last
+#
+# The class name here must match the class defined in the matching file, e.g.
+# `M01NavigateToObjectMission` lives in m01_navigate_to_object_mission.py.
+
 - M00SetupMission: setup
 - M01NavigateToObjectMission
 - M02CollectObjectMission
 - M03DeliverObjectMission
+- M99ShutdownMission: shutdown
