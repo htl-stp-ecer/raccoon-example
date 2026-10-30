@@ -21,7 +21,6 @@ missions:           !include config/missions.yml
 definitions:        !include config/hardware.yml
 connection:         !include config/connection.yml
 run_configurations: !include config/run-configurations.yml
-services:           !include config/services.yml
 
 # Named run configurations that should NOT appear in the BotUI picker.
 # `raccoon run` still accepts them by name; they are just hidden from the list.
