@@ -1,4 +1,4 @@
-# Motor configuration for ExampleBot (differential drivetrain).
+# Motor configuration for ExampleBot (four-wheel mecanum drivetrain).
 #
 # ticks_to_rad: how many radians one encoder tick represents.
 #   Formula: ticks_to_rad = (2 * pi) / ticks_per_revolution
@@ -20,18 +20,48 @@
 #   1.0 = no filtering (raw, noisy). 0.1 = heavy filtering (slow to react).
 #   Leave at 1.0 unless you see noisy velocity readings in the logs.
 
-left_motor:
+# Wheel naming / ports (viewed from above, robot facing forward):
+#
+#     front_left (0)  ┌───────┐  front_right (1)
+#                     │       │
+#     rear_left  (2)  └───────┘  rear_right  (3)
+#
+# The right-hand motors are mounted mirrored, so they are `inverted: true`.
+# If the robot drives the wrong way or spins instead of driving straight, the
+# fix is almost always one of these `inverted` flags — see the mecanum notes in
+# README.md for the quick wheel-by-wheel test.
+#
+# The ticks_to_rad values below are placeholders: measure each wheel for your
+# own robot (the four wheels usually differ slightly).
+
+front_left_motor:
   type: Motor
   port: 0
   inverted: false
   calibration:
-    ticks_to_rad: 1.741e-05   # 2π / ~361 000 ticks/rev — measure for your robot
+    ticks_to_rad: 1.741e-05
     vel_lpf_alpha: 1.0
 
-right_motor:
+front_right_motor:
   type: Motor
   port: 1
-  inverted: true              # right motor faces opposite direction → invert
+  inverted: true   # mirrored → invert
   calibration:
-    ticks_to_rad: 1.712e-05   # 2π / ~367 000 ticks/rev — slight asymmetry between motors is normal
+    ticks_to_rad: 1.712e-05
+    vel_lpf_alpha: 1.0
+
+rear_left_motor:
+  type: Motor
+  port: 2
+  inverted: false
+  calibration:
+    ticks_to_rad: 1.741e-05
+    vel_lpf_alpha: 1.0
+
+rear_right_motor:
+  type: Motor
+  port: 3
+  inverted: true   # mirrored → invert
+  calibration:
+    ticks_to_rad: 1.712e-05
     vel_lpf_alpha: 1.0

@@ -61,10 +61,15 @@ class M000SetupMission(SetupMission):
                         )
                     ),
 
+                    # Mecanum can also move sideways, and the rollers make strafing
+                    # scale differently from driving forward — so calibrate the
+                    # LATERAL axis with its own strafe drive.
+                    collect_drive(strafe_right(cm=30)),
+
                     # Refuse to continue unless calibration actually produced the
                     # data we need. Fails loudly here instead of misbehaving mid-match.
                     calibration_gate(
-                        require_axes=[CalibrationAxis.FORWARD],
+                        require_axes=[CalibrationAxis.FORWARD, CalibrationAxis.LATERAL],
                         require_ir_sets=["default"],
                     ),
                 ]),

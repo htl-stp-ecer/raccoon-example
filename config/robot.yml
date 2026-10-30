@@ -2,11 +2,14 @@ shutdown_in: 120   # seconds until the program auto-exits (prevents runaway robo
 
 drive:
   kinematics:
-    type: differential
+    type: mecanum
     wheel_radius: 0.0345   # metres — measure with calipers
-    wheelbase: 0.16        # metres — distance between left and right wheel contact points
-    left_motor: left_motor
-    right_motor: right_motor
+    track_width: 0.16      # metres — left-to-right distance between wheel contact points
+    wheelbase: 0.12        # metres — front-to-back distance between axles
+    front_left_motor: front_left_motor
+    front_right_motor: front_right_motor
+    back_left_motor: rear_left_motor     # kinematics calls it "back", hardware.yml "rear"
+    back_right_motor: rear_right_motor
 
   # Chassis-level velocity controller.
   # These values are produced by `raccoon calibrate` — run it once per robot to
@@ -31,7 +34,7 @@ drive:
         kS: 0.0   # set by raccoon calibrate
         kV: 1.0
         kA: 0.0
-    vy:           # unused for differential drive (robot cannot move sideways)
+    vy:           # sideways (strafe) velocity — mecanum only; `raccoon calibrate` tunes it
       pid:
         kp: 0.0
         ki: 0.0
@@ -92,16 +95,17 @@ motion_pid:
   # acceleration: how fast to ramp up to max speed (m/s² or rad/s²)
   # deceleration: how fast to slow down before reaching the target (m/s² or rad/s²)
   #
-  # These values were measured for a raccoonOS differential-drive robot.
-  # Run `raccoon calibrate` to compute accurate values for your robot.
+  # Starting values for a mecanum robot — run `raccoon calibrate` to measure
+  # real ones. Strafing is slower than driving forward (rollers slip sideways),
+  # so the lateral limits are deliberately lower than the linear ones.
   linear:
     max_velocity: 0.24    # m/s  (~24 cm/s)
     acceleration: 0.28    # m/s²
     deceleration: 2.05    # m/s² — higher than accel for precise stopping
-  lateral:
-    max_velocity: 0.0     # differential drive cannot strafe
-    acceleration: 0.0
-    deceleration: 0.0
+  lateral:                # strafe — non-zero is REQUIRED for strafe_left/right
+    max_velocity: 0.18    # m/s
+    acceleration: 0.25    # m/s²
+    deceleration: 1.5     # m/s²
   angular:
     max_velocity: 2.0     # rad/s (~115°/s)
     acceleration: 3.0     # rad/s²
