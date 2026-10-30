@@ -89,6 +89,11 @@ sed -i.bak -E "s/^name: .*/name: $NAME/" raccoon.project.yml
 
 info "Creating a fresh git repository"
 rm -rf .git
+# The example ignores uv.lock; the new project should commit its lockfile.
+if [[ -f .gitignore ]]; then
+  sed -i.bak -E '/^\/?uv\.lock[[:space:]]*$/d' .gitignore
+  rm -f .gitignore.bak
+fi
 git init -q -b main
 
 if   [[ -r /proc/sys/kernel/random/uuid ]]; then UUID="$(cat /proc/sys/kernel/random/uuid)"

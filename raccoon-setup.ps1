@@ -85,6 +85,11 @@ function Invoke-RaccoonSetup {
 
     Info 'Creating a fresh git repository'
     Remove-Item -Recurse -Force .git
+    # The example ignores uv.lock; the new project should commit its lockfile.
+    if (Test-Path .gitignore) {
+        $ignore = [IO.File]::ReadAllText((Join-Path (Get-Location) '.gitignore'))
+        Write-FileUtf8 '.gitignore' ($ignore -replace '(?m)^/?uv\.lock[ \t]*\r?\n', '')
+    }
     Invoke-Native git init -q -b main
 
     $uuid = [guid]::NewGuid().ToString()
