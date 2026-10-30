@@ -3,9 +3,9 @@ shutdown_in: 120   # seconds until the program auto-exits (prevents runaway robo
 drive:
   kinematics:
     type: mecanum
-    wheel_radius: 0.0345   # metres — measure with calipers
-    track_width: 0.16      # metres — left-to-right distance between wheel contact points
-    wheelbase: 0.12        # metres — front-to-back distance between axles
+    wheel_radius: 0.0375   # metres — measure with calipers
+    track_width: 0.2       # metres — left-to-right distance between wheel contact points
+    wheelbase: 0.125       # metres — front-to-back distance between axles
     front_left_motor: front_left_motor
     front_right_motor: front_right_motor
     back_left_motor: rear_left_motor     # kinematics calls it "back", hardware.yml "rear"
@@ -27,9 +27,9 @@ drive:
   vel_config:
     vx:
       pid:
-        kp: 0.0
-        ki: 0.0
-        kd: 0.0
+        kp: 0.001438
+        ki: 0.86309
+        kd: 0.000157
       ff:
         kS: 0.0   # set by raccoon calibrate
         kV: 1.0
@@ -57,18 +57,18 @@ drive:
 # distance and heading targets. Tune these if the robot overshoots or oscillates.
 motion_pid:
   distance:
-    kp: 3.0
+    kp: 8.0
     ki: 0.0
-    kd: 0.0
+    kd: 0.2
     integral_max: 10.0
     integral_deadband: 0.01
     derivative_lpf_alpha: 0.5
     output_min: -10.0
     output_max: 10.0
   heading:
-    kp: 6.0
+    kp: 9.5156
     ki: 0.0
-    kd: 0.15
+    kd: 0.0125
     integral_max: 10.0
     integral_deadband: 0.01
     derivative_lpf_alpha: 0.5
@@ -99,34 +99,34 @@ motion_pid:
   # real ones. Strafing is slower than driving forward (rollers slip sideways),
   # so the lateral limits are deliberately lower than the linear ones.
   linear:
-    max_velocity: 0.24    # m/s  (~24 cm/s)
-    acceleration: 0.28    # m/s²
-    deceleration: 2.05    # m/s² — higher than accel for precise stopping
+    max_velocity: 0.2139  # m/s  (~21 cm/s)
+    acceleration: 0.9402  # m/s²
+    deceleration: 1.4      # m/s² — higher than accel for precise stopping
   lateral:                # strafe — non-zero is REQUIRED for strafe_left/right
-    max_velocity: 0.18    # m/s
-    acceleration: 0.25    # m/s²
-    deceleration: 1.5     # m/s²
+    max_velocity: 0.2209  # m/s
+    acceleration: 0.6485  # m/s²
+    deceleration: 0.4498  # m/s²
   angular:
-    max_velocity: 2.0     # rad/s (~115°/s)
-    acceleration: 3.0     # rad/s²
-    deceleration: 3.0     # rad/s² — braking profile for precise heading stops
+    max_velocity: 1.8501  # rad/s (~106°/s)
+    acceleration: 11.0545 # rad/s²
+    deceleration: 20        # rad/s² — braking profile for precise heading stops
 
 physical:
-  width_cm: 18.0
-  length_cm: 22.0
+  width_cm: 23.5
+  length_cm: 26
   sensors:
     - name: front_left_ir_sensor
-      x_cm: -6.0
-      y_cm: 13.0
-      clearance_cm: 1.0
+      x_cm: 9.5
+      y_cm: 23.8
+      clearance_cm: 0.0
     - name: front_right_ir_sensor
-      x_cm: 6.0
-      y_cm: 13.0
-      clearance_cm: 1.0
+      x_cm: 22.5
+      y_cm: 24.7
+      clearance_cm: 0.0
   rotation_center:
-    x_cm: 9.0
-    y_cm: 7.0
+    x_cm: 11.75
+    y_cm: 13.5
   start_pose:
-    x_cm: 0.0
-    y_cm: 0.0
-    theta_deg: 90.0
+    x_cm: 90.25787965616045
+    y_cm: 47.277936962750715
+    theta_deg: 0.0

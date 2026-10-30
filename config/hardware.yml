@@ -23,10 +23,10 @@ wait_for_light_sensor:        # tournament light-start sensor (analog)
 # Two downward-facing reflectance sensors at the front of the chassis.
 front_left_ir_sensor:
   type: IRSensor
-  port: 1
+  port: 0
 front_right_ir_sensor:
   type: IRSensor
-  port: 2
+  port: 1
 
 # A SensorGroup bundles a left/right pair so missions can call line helpers on
 # the group (Defs.front.left / Defs.front.right, follow_line, lineup, ...).

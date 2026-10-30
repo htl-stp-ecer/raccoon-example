@@ -3,7 +3,7 @@
 # config/ and gives the project its stable identity (name + uuid). The uuid is
 # how the Wombat knows which on-device folder belongs to this project — never
 # change it once a robot has been deployed.
-name: ExampleBot
+name: examplebot
 uuid: change-this
 
 # format_version 2 is the current project schema (run-configurations, services,

@@ -47,7 +47,7 @@ front_right_motor:
   port: 1
   inverted: true   # mirrored → invert
   calibration:
-    ticks_to_rad: 1.712e-05
+    ticks_to_rad: 1.741e-05
     vel_lpf_alpha: 1.0
 
 rear_left_motor:
@@ -63,5 +63,5 @@ rear_right_motor:
   port: 3
   inverted: true   # mirrored → invert
   calibration:
-    ticks_to_rad: 1.712e-05
+    ticks_to_rad: 1.741e-05
     vel_lpf_alpha: 1.0
