@@ -31,12 +31,12 @@ left_motor:
     ticks_to_rad: 0.00387913   # measure for your robot
     vel_lpf_alpha: 0.05
     bemf_offset: 7.5657
-    static_friction_pct: 9
+    static_friction_pct: 13
 
 right_motor:
   type: Motor
   port: 1
-  inverted: true              # right motor faces opposite direction → invert
+  inverted: true
   calibration:
     ticks_to_rad: 0.00385191   # slight asymmetry between motors is normal
     vel_lpf_alpha: 0.05

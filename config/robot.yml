@@ -7,6 +7,9 @@ drive:
     wheelbase: 0.165       # metres — distance between left and right wheel contact points
     left_motor: left_motor
     right_motor: right_motor
+    # Scale applied to commanded chassis velocity, determined by autotune.
+    velocity_command_gain:
+      vx: 2.93306
 
   # Chassis-level velocity controller.
   # These values are produced by `raccoon calibrate` — run it once per robot to
@@ -54,16 +57,16 @@ drive:
 # distance and heading targets. Tune these if the robot overshoots or oscillates.
 motion_pid:
   distance:
-    kp: 3.0
+    kp: 2.8125
     ki: 0.0
-    kd: 0.0
+    kd: 0.02
     integral_max: 10.0
     integral_deadband: 0.01
     derivative_lpf_alpha: 0.5
     output_min: -10.0
     output_max: 10.0
   heading:
-    kp: 6.0
+    kp: 7.5
     ki: 0.0
     kd: 0.2
     integral_max: 10.0
@@ -95,17 +98,17 @@ motion_pid:
   # These values were measured for a raccoonOS differential-drive robot.
   # Run `raccoon calibrate` to compute accurate values for your robot.
   linear:
-    max_velocity: 0.24    # m/s  (~24 cm/s)
+    max_velocity: 0.227   # m/s  (~22.7 cm/s)
     acceleration: 0.28    # m/s²
-    deceleration: 2.05    # m/s² — higher than accel for precise stopping
+    deceleration: 0.5607  # m/s² — higher than accel for precise stopping
   lateral:
     max_velocity: 0.0     # differential drive cannot strafe
     acceleration: 0.0
     deceleration: 0.0
   angular:
-    max_velocity: 2.0     # rad/s (~115°/s)
-    acceleration: 3.0     # rad/s²
-    deceleration: 3.0     # rad/s² — braking profile for precise heading stops
+    max_velocity: 3.1827  # rad/s (~182°/s)
+    acceleration: 0.2048  # rad/s²
+    deceleration: 6.5832  # rad/s² — braking profile for precise heading stops
 
 physical:
   width_cm: 18.0
