@@ -17,6 +17,13 @@
 
 ---
 
+> **You are on the `mecanum` branch** of raccoon-example. The example robot comes in two
+> variants, each on its own branch: [`differential`](https://github.com/htl-stp-ecer/raccoon-example/tree/differential)
+> (two-wheeled) and [`mecanum`](https://github.com/htl-stp-ecer/raccoon-example/tree/mecanum)
+> (four-wheeled). The [`main`](https://github.com/htl-stp-ecer/raccoon-example/tree/main)
+> branch contains **no robot code** — only the setup scripts that create a new project from
+> one of these branches.
+
 Use this as your starting point when reading the documentation or setting up a new
 robot. Every file is written to be **readable first** — no competition pressure, no
 half-finished experiments, no commented-out blocks. It mirrors the structure and
@@ -129,28 +136,51 @@ Flow for a new feature: **mission → step → service**.
 
 ## Quick Start
 
+The easiest way to start a new robot from this example is the setup script. It installs
+git and uv if needed, asks for a project name and drivetrain type, clones the matching
+branch, renames the project, creates a fresh git repository with its own `uuid`, runs
+`uv sync` and makes the first commit. Run it in the folder you want the project in:
+
+**Linux / macOS**
+
 ```bash
-# Clone and enter the project
-git clone https://github.com/htl-stp-ecer/raccoon-example.git
-cd raccoon-example
+curl -LsSf https://raw.githubusercontent.com/htl-stp-ecer/raccoon-example/main/raccoon-setup.sh | bash
 ```
 
-**Give your copy its own identity first.** In `raccoon.project.yml`, set `name:` and
-replace the placeholder `uuid: change-this` with a fresh UUID
-(`python3 -c "import uuid; print(uuid.uuid4())"`). The UUID decides which folder on the
-Wombat (`/home/pi/programs/<uuid>`) holds your project — two projects with the same
-UUID overwrite each other when deployed to the same robot. `raccoon create project
-<name>` does this for you (and also clones this repo), so prefer it when starting a
-new robot.
+**Windows (PowerShell)**
+
+```powershell
+irm https://raw.githubusercontent.com/htl-stp-ecer/raccoon-example/main/raccoon-setup.ps1 | iex
+```
+
+Then activate the virtual environment, connect to your Wombat and run:
 
 ```bash
-# Connect to your Wombat and run
+cd <your-project>
+source .venv/bin/activate        # Windows PowerShell: .venv\Scripts\Activate.ps1
 raccoon connect <PI_ADDRESS>
 raccoon run
 ```
 
 The first `raccoon run` generates `src/hardware/` from the YAML, so there is nothing
 to build by hand.
+
+<details>
+<summary>Setting it up manually instead</summary>
+
+```bash
+git clone -b mecanum --single-branch https://github.com/htl-stp-ecer/raccoon-example.git
+cd raccoon-example
+uv sync
+```
+
+**Give your copy its own identity first.** In `raccoon.project.yml`, set `name:` (and the
+`name` in `pyproject.toml`) and replace the placeholder `uuid: change-this` with a fresh
+UUID (`python3 -c "import uuid; print(uuid.uuid4())"`). The UUID decides which folder on
+the Wombat (`/home/pi/programs/<uuid>`) holds your project — two projects with the same
+UUID overwrite each other when deployed to the same robot.
+
+</details>
 
 See [Getting Started](https://raccoon-docs.pages.dev/00-quick-start) if this is your
 first time. For fast iteration use a run profile: `raccoon run --config dev`.
@@ -175,10 +205,18 @@ full log), `localization.jsonl`, `profile.json`, `cmd_trace.robot.jsonl`,
 
 ## Adapting to Your Robot
 
-### Hardware setup (`raccoon wizard`)
+### Hardware setup (`config/*.yml`)
 
-`raccoon wizard` configures your physical hardware — drivetrain type, wheel diameter,
-wheelbase, motor ports, sensors, servos — interactively, writing into `config/*.yml`.
+Your physical hardware is described entirely in the YAML files: motor ports and
+`inverted` flags in `config/motors.yml`, servos in `config/servos.yml`, sensors in
+`config/hardware.yml`, and the drivetrain geometry in `config/robot.yml`.
+
+> ## ⚠️ Units: kinematics values are in **meters**
+>
+> `wheel_radius`, `wheelbase` and `track_width` in `config/robot.yml` must be entered in
+> **meters**, not centimeters or inches. Convert first: mm ÷ 1000, cm ÷ 100,
+> inches × 0.0254 (e.g. 16 cm → `0.16`). The `physical:` section of the same file is the
+> exception — its keys end in `_cm` and are in **centimeters**.
 
 ### Performance tuning (`raccoon calibrate`)
 
@@ -198,7 +236,7 @@ still even when commanded to move (for `lateral`, `strafe_left/right` won't move
 
 This branch is the **mecanum** variant (the `differential` branch is the two-wheel one).
 The drivetrain is defined in `config/robot.yml` (`type: mecanum`, `track_width` =
-left-to-right, `wheelbase` = front-to-back) and the four motors in `config/motors.yml`
+left-to-right, `wheelbase` = front-to-back, both in meters) and the four motors in `config/motors.yml`
 (`front_left` 0, `front_right` 1, `rear_left` 2, `rear_right` 3).
 
 If the robot drives wrongly the first time, test one wheel at a time (BotUI > Motors):
@@ -225,7 +263,7 @@ and how to introspect the library. Three project skills live in `.claude/skills/
 | Repository | What it is |
 |:-----------|:-----------|
 | [raccoon-lib](https://github.com/htl-stp-ecer/raccoon-lib) | The core robotics library |
-| [raccoon-cli](https://github.com/htl-stp-ecer/raccoon-cli) | `raccoon run`, `raccoon calibrate`, `raccoon wizard` |
+| [raccoon-cli](https://github.com/htl-stp-ecer/raccoon-cli) | `raccoon run`, `raccoon calibrate`, … |
 | [documentation](https://github.com/htl-stp-ecer/documentation) | Full platform docs |
 
 ---
