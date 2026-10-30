@@ -10,8 +10,10 @@ conventions exactly so the project stays consistent.
 
 ## 1. Create the mission file
 
-Name: `m{nn}_{snake_description}_mission.py`, class `M{nn}{PascalDescription}Mission`.
-Numbers order the match; keep `00` = setup and `99` = shutdown.
+Name: `m{NNN}_{snake_description}_mission.py`, class `M{NNN}{PascalDescription}Mission`.
+Always three digits: `000` = setup, `010`–`998` = main missions (steps of 10 leave room
+to insert), `999` = shutdown. The number is for readability — run order comes only
+from `config/missions.yml`.
 
 ```python
 from raccoon import *
@@ -19,7 +21,7 @@ from raccoon import *
 from src.hardware.defs import Defs
 
 
-class M15PushCubesMission(Mission):
+class M040PushCubesMission(Mission):
     """One-line summary of what this phase accomplishes.
 
     Demonstrates: (list the raccoon primitives a reader will learn from here).
@@ -44,20 +46,18 @@ Rules:
 Add it in the correct position in **`config/missions.yml`**:
 
 ```yaml
-- M15PushCubesMission
+- M040PushCubesMission
 ```
 
-## 3. Wire it into the robot
+## 3. Nothing else to wire
 
-Because this repo hand-maintains `src/hardware/robot.py` (normally generated), also:
-- add `from src.missions.m15_push_cubes_mission import M15PushCubesMission`
-- insert it in the `missions = [ ... ]` list in the right order.
-
-(In a fully generated project, `raccoon run` does this from `missions.yml` for you.)
+`src/hardware/robot.py` is generated: `raccoon run` (or `raccoon codegen`) rebuilds its
+mission list from `config/missions.yml`. Do not edit it by hand.
 
 ## 4. Verify it builds
 
 ```bash
+raccoon codegen   # regenerates src/hardware/ from config/*.yml
 RACCOON_PLATFORM=mock python -c "from src.hardware.robot import Robot; \
   [m.sequence() for m in Robot().missions]; print('OK')"
 ```

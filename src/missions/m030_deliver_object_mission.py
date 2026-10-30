@@ -5,7 +5,7 @@ from src.steps.arm_steps import release_object
 from src.steps.delivery_steps import record_delivery
 
 
-class M03DeliverObjectMission(Mission):
+class M030DeliverObjectMission(Mission):
     """Navigate to the delivery zone and deposit the object.
 
     Demonstrates:

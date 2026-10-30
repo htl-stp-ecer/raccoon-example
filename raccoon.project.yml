@@ -4,7 +4,7 @@
 # how the Wombat knows which on-device folder belongs to this project — never
 # change it once a robot has been deployed.
 name: ExampleBot
-uuid: b1845bac-ce82-45e7-aa37-f9f4df6c119f
+uuid: change-this
 
 # format_version 2 is the current project schema (run-configurations, services,
 # scoped calibration profiles). Older projects without this line are read as v1.

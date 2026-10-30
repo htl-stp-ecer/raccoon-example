@@ -28,7 +28,7 @@ to the user (they can run it inline with `! <command>`).
    | Fastest loop (skip calibration too) | `raccoon run --config dev-nc` |
    | Diagnose motion/timing (cmd trace + profiling + localization) | `raccoon run --config profile` |
 
-3. **After the run**, logs are pulled to `.raccoon/downloads/run<N>_.../`. To analyse
+3. **After the run**, logs are pulled to `.raccoon/runs/<run_id>/`. To analyse
    them, use the `debug-logs` skill.
 
 ## Notes
@@ -37,5 +37,6 @@ to the user (they can run it inline with `! <command>`).
 - If the robot "does nothing", check that `motion_pid` constraints in
   `config/robot.yml` are non-zero and that calibration ran (don't use `dev-nc` for a
   first bring-up).
-- Regenerated `src/hardware/defs.py` / `robot.py` reflect the current `config/*.yml`.
+- `src/hardware/defs.py` / `robot.py` are generated from the current `config/*.yml`
+  on every run (they are git-ignored and absent from a fresh checkout).
   If a device seems wrong, fix the YAML and re-run — never hand-edit the generated files.

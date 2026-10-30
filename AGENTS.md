@@ -7,7 +7,7 @@ Quick summary (read `CLAUDE.md` for the full contract):
 
 - The library is imported as `import raccoon` (never `libstp`).
 - `config/*.yml` is the source of truth; `src/hardware/defs.py` and `robot.py` are
-  **generated** by `raccoon run` — edit the YAML, not those files.
+  **generated** (git-ignored) by `raccoon run` / `raccoon codegen` — edit the YAML, not those files.
 - Architecture is layered: **missions** (sequencing) → **steps** (actions) →
   **services** (shared state). Keep each in its lane.
 - Prefer built-in `raccoon` primitives; introspect the library before inventing

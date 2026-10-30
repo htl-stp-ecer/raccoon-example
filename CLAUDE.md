@@ -21,10 +21,10 @@ deliver an object) is deliberately trivial so the *structure* is the lesson.
 
 - **`raccoon.project.yml` + `config/*.yml` are the source of truth for hardware.**
 - **`src/hardware/defs.py` and `src/hardware/robot.py` are GENERATED artifacts.**
-  On a real project `raccoon run` regenerates them from the YAML on every run.
-  In *this* repo they are hand-written and commented for teaching, but the rule
-  still holds: to change a port, servo position, PID gain, or kinematic value,
-  **edit the YAML**, not the Python. Hand edits to generated files get overwritten.
+  `raccoon run` (or `raccoon codegen`) regenerates them from the YAML on every run;
+  they are git-ignored, so a fresh checkout does not contain them. To change a port,
+  servo position, PID gain, or kinematic value, **edit the YAML**, not the Python.
+  Hand edits to generated files get overwritten.
 
 ---
 
@@ -99,7 +99,8 @@ Missions do `from raccoon import *` and compose steps:
   `calibration_gate(require_axes=[CalibrationAxis.FORWARD], require_ir_sets=[...])`,
   `wait_for_button("msg")`.
 - **Servos**: named positions from YAML become steps — `Defs.arm_servo.down()`,
-  `Defs.arm_servo.down(speed=120)` (eased, °/s), `Defs.arm_servo.up(blocking=False)`.
+  `Defs.arm_servo.down(120)` or `down(speed=120)` (eased, °/s). Servo steps block
+  until the move is done; run them in `parallel(...)` to overlap with other work.
 - **Params**: `MissionParams.<name>.ask("prompt")` in setup, `.get()` in missions.
 
 Not sure a symbol exists? It's re-exported from `raccoon`. Verify with
@@ -121,7 +122,7 @@ Not sure a symbol exists? It's re-exported from `raccoon`. Verify with
   into `config/*.yml`.
 - **Calibration**: `raccoon calibrate` characterises the drivetrain and writes
   motion constraints / feed-forward into the config. The in-run calibration step in
-  `m00_setup_mission.py` additionally auto-corrects small deviations each run.
+  `m000_setup_mission.py` additionally auto-corrects small deviations each run.
 
 You (the agent) generally **cannot** run these — they need a physical Wombat. Make
 the code changes and tell the human which command to run.
@@ -136,9 +137,9 @@ Full reference: [`docs/LOGGING.md`](docs/LOGGING.md). The essentials:
   `RobotService`/`Step` use `self.info(...)` etc. (tags the class + method).
 - **Every** call is captured to the per-run JSONL log with file/line/function.
   The console shows only `warn`/`error`; the JSONL file captures everything.
-- After a run, artifacts land in `.raccoon/downloads/run<N>_<timestamp>/`:
-  `libstp.jsonl` (full log), `localization.jsonl`, `profile.<Mission>.json`,
-  `cmd_trace.jsonl`, `sensors.mcap`, `journal.<service>.jsonl`, `run.json`.
+- After a run, artifacts land in `.raccoon/runs/<run_id>/`:
+  `libstp.jsonl` (full log), `localization.jsonl`, `profile.json`,
+  `cmd_trace.robot.jsonl`, `sensors.mcap`, `journal.<service>.jsonl`, `run.json`.
 - To debug a run, read the newest `libstp.jsonl`. It is newline-delimited JSON —
   grep by `"level":"error"` or a `func`/`msg` substring.
 
@@ -163,8 +164,10 @@ On the Pi you can also SSH in and introspect the installed `raccoon` (`dir()`,
 
 ## Conventions
 
-- Missions: `M{nn}{Description}Mission` in `m{nn}_{description}_mission.py`
-  (`M01NavigateToObjectMission`). `00` = setup, `99` = shutdown.
+- Missions: `M{NNN}{Description}Mission` in `m{NNN}_{description}_mission.py`
+  (`M010NavigateToObjectMission`). Always three digits: `000` = setup,
+  `010`–`998` = main missions (leave gaps of 10), `999` = shutdown. Run order comes
+  from `config/missions.yml`, not the number.
 - Steps: verb-first `@dsl` factory (`grab_object`, `record_delivery`); `Step`
   subclasses `PascalCaseStep`.
 - Services: `PascalCaseService(RobotService)`, one responsibility each.

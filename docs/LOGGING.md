@@ -74,7 +74,8 @@ object per line. Each record captures the caller's source location automatically
 Because `file`/`line`/`func` are discrete fields, you can pinpoint *which line*
 emitted any message — no need to grep source for a string.
 
-There is also a human-readable mirror, `.raccoon/logs/libstp.log`, formatted as:
+There is also a human-readable mirror, `libstp.log` (follow it live with
+`raccoon logs --local tail -f`), formatted as:
 
 ```
 2026-07-03 14:08:20 | 0.001s | info | h.p...r.api.py | [M000SetupMission]: Starting mission
@@ -99,7 +100,7 @@ On the **Wombat**, each run gets its own directory:
 After the run, `raccoon run` **pulls the artifacts back** to your machine under:
 
 ```
-.raccoon/downloads/run<N>_<YYYYMMDD-HHMMSS>/
+.raccoon/runs/<run_id>/
 ```
 
 (The `.raccoon/` directory is git-ignored — it's local run state, not source.)
@@ -109,7 +110,7 @@ Pass `no_sync` in a run configuration to skip the pull-back.
 
 ## 4. Run artifacts — the full set
 
-Every entry below appears in a `.raccoon/downloads/run<N>_.../` folder. Which ones
+Every entry below appears in a `.raccoon/runs/<run_id>/` folder. Which ones
 are populated depends on the run configuration (see
 `config/run-configurations.yml`).
 
@@ -119,8 +120,8 @@ are populated depends on the run configuration (see
 | `run.json` | Run metadata: id, start/end time, missions, which artifacts were recorded | always |
 | `manifest.json` | Index of artifacts in this run folder + their sizes | always |
 | `localization.jsonl` | Recorded robot pose over time — replay the path offline | `record_localization` |
-| `profile.<Mission>.json` | Per-mission timing/profiling breakdown | `RACCOON_PROFILE=1` |
-| `cmd_trace.jsonl` | Every low-level SPI command sent to the STM32 (servo/motor writes) | `RACCOON_CMD_TRACE=1` |
+| `profile.json` | Per-mission timing/profiling breakdown | `RACCOON_PROFILE=1` |
+| `cmd_trace.robot.jsonl` | Every low-level SPI command sent to the STM32 (servo/motor writes) | `RACCOON_CMD_TRACE=1` |
 | `sensors.mcap` | Sensor stream in [MCAP](https://mcap.dev) format — open in Foxglove | sensor recording |
 | `journal.<service>.jsonl` | systemd journal for each background daemon service | when daemons run |
 
@@ -128,7 +129,7 @@ are populated depends on the run configuration (see
 
 ```bash
 # The newest run folder
-d=$(ls -dt .raccoon/downloads/run*/ | head -1)
+d=$(ls -dt .raccoon/runs/*/ | head -1)
 
 # All errors and warnings from the last run
 grep -E '"level":"(error|warn)"' "$d/libstp.jsonl"
@@ -157,8 +158,8 @@ variables that control optional artifacts:
 profile:
   record_localization: true      # → localization.jsonl
   env:
-    RACCOON_CMD_TRACE: '1'        # → cmd_trace.jsonl
-    RACCOON_PROFILE: '1'          # → profile.<Mission>.json
+    RACCOON_CMD_TRACE: '1'        # → cmd_trace.robot.jsonl
+    RACCOON_PROFILE: '1'          # → profile.json
 ```
 
 Then: `raccoon run --config profile`.
@@ -167,10 +168,10 @@ Then: `raccoon run --config profile`.
 
 ## 6. Debugging checklist
 
-1. Reproduce the run, then open the newest `.raccoon/downloads/run*/libstp.jsonl`.
+1. Reproduce the run, then open the newest `.raccoon/runs/*/libstp.jsonl`.
 2. `grep '"level":"error"'` — start at the first error and read `file`/`line`.
 3. Use `elapsed` to correlate log lines with what the robot was physically doing.
 4. Add your own `info`/`debug` around the suspect step and run again — nothing is
    filtered out, so it will be in the file.
-5. For motion issues, enable `RACCOON_CMD_TRACE` and inspect `cmd_trace.jsonl`, or
+5. For motion issues, enable `RACCOON_CMD_TRACE` and inspect `cmd_trace.robot.jsonl`, or
    record localization and replay the path.

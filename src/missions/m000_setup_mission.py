@@ -4,7 +4,7 @@ from src.hardware.defs import Defs
 from src.mission_params import MissionParams
 
 
-class M00SetupMission(SetupMission):
+class M000SetupMission(SetupMission):
     """Runs ONCE before the match — this is where you prepare, not perform.
 
     Good things to do in setup:

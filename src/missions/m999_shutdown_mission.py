@@ -3,8 +3,8 @@ from raccoon import *
 from src.hardware.defs import Defs
 
 
-class M99ShutdownMission(Mission):
-    """Runs automatically when `shutdown_in` (see robot.py) elapses.
+class M999ShutdownMission(Mission):
+    """Runs automatically when `shutdown_in` (see config/robot.yml) elapses.
 
     The shutdown mission's only job is to leave the robot SAFE: motors off,
     servos relaxed. Whatever the robot was doing, it ends up here — so keep it

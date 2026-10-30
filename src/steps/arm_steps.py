@@ -53,7 +53,7 @@ def safe_arm_lower() -> Defer:
     mid-travel — useful when a previous mission left the arm in an unknown state.
     """
     def _build(_robot):
-        current_angle = Defs.arm_servo.get_position()
+        current_angle = Defs.arm_servo.device.get_position()
 
         if current_angle <= _ARM_HOLD_DEG:
             info(f"Arm already at {current_angle:.1f}° — skipping lower")

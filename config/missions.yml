@@ -7,10 +7,10 @@
 #   - Name: shutdown   → runs automatically when `shutdown_in` elapses, or last
 #
 # The class name here must match the class defined in the matching file, e.g.
-# `M01NavigateToObjectMission` lives in m01_navigate_to_object_mission.py.
+# `M010NavigateToObjectMission` lives in m010_navigate_to_object_mission.py.
 
-- M00SetupMission: setup
-- M01NavigateToObjectMission
-- M02CollectObjectMission
-- M03DeliverObjectMission
-- M99ShutdownMission: shutdown
+- M000SetupMission: setup
+- M010NavigateToObjectMission
+- M020CollectObjectMission
+- M030DeliverObjectMission
+- M999ShutdownMission: shutdown

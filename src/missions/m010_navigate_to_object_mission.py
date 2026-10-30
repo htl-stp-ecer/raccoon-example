@@ -4,7 +4,7 @@ from src.hardware.defs import Defs
 from src.mission_params import MissionParams
 
 
-class M01NavigateToObjectMission(Mission):
+class M010NavigateToObjectMission(Mission):
     """Drive from the start position to the object pick-up zone.
 
     Demonstrates:

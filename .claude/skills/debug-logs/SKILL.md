@@ -10,10 +10,10 @@ RaccoonOS captures nearly everything a run did to a structured log. Full referen
 
 ## 1. Find the newest run
 
-Artifacts land in `.raccoon/downloads/run<N>_<timestamp>/` after `raccoon run`.
+Artifacts land in `.raccoon/runs/<run_id>/` after `raccoon run`.
 
 ```bash
-d=$(ls -dt .raccoon/downloads/run*/ | head -1); echo "$d"
+d=$(ls -dt .raccoon/runs/*/ | head -1); echo "$d"
 ```
 
 ## 2. Read the main log (`libstp.jsonl`)
@@ -41,8 +41,8 @@ physically doing at that moment.
 | Symptom | Artifact | How |
 |:--------|:---------|:----|
 | what did this run record? | `run.json` | `python3 -m json.tool "$d/run.json"` |
-| a mission was slow | `profile.<Mission>.json` | needs `RACCOON_PROFILE=1` (run `--config profile`) |
-| motors/servos misbehaving | `cmd_trace.jsonl` | needs `RACCOON_CMD_TRACE=1` — every SPI command |
+| a mission was slow | `profile.json` | needs `RACCOON_PROFILE=1` (run `--config profile`) |
+| motors/servos misbehaving | `cmd_trace.robot.jsonl` | needs `RACCOON_CMD_TRACE=1` — every SPI command |
 | path/position looks wrong | `localization.jsonl`, `sensors.mcap` | replay in the localization viewer / Foxglove |
 
 If the needed artifact is missing, re-run with `raccoon run --config profile` (or add
@@ -54,7 +54,7 @@ Nothing is filtered from the file, so add `info`/`debug` around the suspect code
 
 ```python
 from raccoon import info
-info(f"about to grab: claw={Defs.claw_servo.get_position():.0f}")
+info(f"about to grab: claw={Defs.claw_servo.device.get_position():.0f}")
 ```
 
 Then re-run and grep for your message. Inside a `Step`/`RobotService`, use

@@ -16,8 +16,8 @@
 #   env             extra environment variables passed to the program
 #
 # Environment variables read by the raccoon runtime itself:
-#   RACCOON_CMD_TRACE=1   dump every low-level SPI command to cmd_trace.jsonl
-#   RACCOON_PROFILE=1     write per-mission timing to profile.<Mission>.json
+#   RACCOON_CMD_TRACE=1   dump every low-level SPI command to cmd_trace.robot.jsonl
+#   RACCOON_PROFILE=1     write per-mission timing to profile.json
 #   RACCOON_PLATFORM      force "wombat" or "mock" (auto-detected otherwise)
 
 default:
@@ -46,8 +46,7 @@ dev:
   record_localization: false
   record_hz:
   args: []
-  env:
-    EXAMPLEBOT_VERBOSE: '1'
+  env: {}
 
 dev-nc:
   name: dev-nc
@@ -61,8 +60,7 @@ dev-nc:
   record_localization: false
   record_hz:
   args: []
-  env:
-    EXAMPLEBOT_VERBOSE: '1'
+  env: {}
 
 profile:
   name: profile

@@ -4,7 +4,7 @@ from src.hardware.defs import Defs
 from src.steps.arm_steps import grab_object
 
 
-class M02CollectObjectMission(Mission):
+class M020CollectObjectMission(Mission):
     """Pick up the object and prepare for delivery.
 
     Demonstrates:

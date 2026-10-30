@@ -21,9 +21,9 @@ config/*.yml  ──(raccoon run: codegen)──▶  src/hardware/defs.py + robo
 
 - **YAML → generated Python.** You describe hardware in `config/*.yml`. `raccoon run`
   generates `defs.py` (every device as a `Defs.<name>`) and `robot.py` (the assembled
-  robot: drivetrain, PID, geometry, mission list). *In this teaching repo those two
-  files are hand-written and commented, but in a real project they are regenerated
-  every run — so edit the YAML, not the generated Python.*
+  robot: drivetrain, PID, geometry, mission list). *They are regenerated on every run
+  and are git-ignored, so they are not in a fresh checkout — edit the YAML, never the
+  generated Python. Run `raccoon codegen` to produce them without a robot.*
 - **The runtime drives the match.** `Robot().start()` runs the setup mission once,
   then each mission in order, then the shutdown mission when `shutdown_in` elapses.
 
@@ -37,7 +37,7 @@ A mission is a declarative sequence. It reads like a plan, top to bottom, and
 contains **no business logic or loops** — just composition of steps.
 
 ```python
-class M01NavigateToObjectMission(Mission):
+class M010NavigateToObjectMission(Mission):
     def sequence(self) -> Sequential:
         return seq([
             mark_heading_reference(),
@@ -47,8 +47,9 @@ class M01NavigateToObjectMission(Mission):
         ])
 ```
 
-One file per mission, numbered: `m00` (setup) … `m99` (shutdown). The order and
-roles are declared in `config/missions.yml` and realised in `robot.py`.
+One file per mission, numbered with three digits: `m000` (setup), `m010`–`m998` (main missions), `m999` (shutdown). The order and
+roles are declared in `config/missions.yml`; codegen turns that list into the generated
+`robot.py`.
 
 ### 2. Steps — *one reusable action* (`src/steps/`)
 
@@ -107,7 +108,7 @@ runs and scoped per run configuration. See `src/mission_params.py`.
 | I want to…                                    | Edit |
 |:----------------------------------------------|:-----|
 | change a port / servo angle / PID gain        | `config/*.yml`, then `raccoon run` |
-| change the order missions run in              | `config/missions.yml` + `robot.py` mission list |
+| change the order missions run in              | `config/missions.yml` (codegen updates `robot.py`) |
 | change what a mission does                     | `src/missions/m*.py` |
 | add a reusable action                          | `src/steps/*.py` |
 | hold state across steps / a control algorithm  | `src/service/*.py` |
