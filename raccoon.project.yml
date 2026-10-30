@@ -3,7 +3,7 @@
 # config/ and gives the project its stable identity (name + uuid). The uuid is
 # how the Wombat knows which on-device folder belongs to this project — never
 # change it once a robot has been deployed.
-name: ExampleBot
+name: examplebot
 uuid: change-this
 
 # format_version 2 is the current project schema (run-configurations, services,
@@ -21,6 +21,7 @@ missions:           !include config/missions.yml
 definitions:        !include config/hardware.yml
 connection:         !include config/connection.yml
 run_configurations: !include config/run-configurations.yml
+services:           !include config/services.yml
 
 # Named run configurations that should NOT appear in the BotUI picker.
 # `raccoon run` still accepts them by name; they are just hidden from the list.

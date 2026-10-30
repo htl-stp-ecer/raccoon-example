@@ -19,19 +19,26 @@
 # vel_lpf_alpha: low-pass filter strength on the measured wheel velocity.
 #   1.0 = no filtering (raw, noisy). 0.1 = heavy filtering (slow to react).
 #   Leave at 1.0 unless you see noisy velocity readings in the logs.
+#
+# bemf_offset: constant offset of the back-EMF velocity reading, measured by `raccoon calibrate`.
+# static_friction_pct: minimum motor power (%) needed to overcome static friction, also from calibrate.
 
 left_motor:
   type: Motor
   port: 0
   inverted: false
   calibration:
-    ticks_to_rad: 1.741e-05   # 2π / ~361 000 ticks/rev — measure for your robot
-    vel_lpf_alpha: 1.0
+    ticks_to_rad: 0.00387913   # measure for your robot
+    vel_lpf_alpha: 0.05
+    bemf_offset: 7.5657
+    static_friction_pct: 9
 
 right_motor:
   type: Motor
   port: 1
   inverted: true              # right motor faces opposite direction → invert
   calibration:
-    ticks_to_rad: 1.712e-05   # 2π / ~367 000 ticks/rev — slight asymmetry between motors is normal
-    vel_lpf_alpha: 1.0
+    ticks_to_rad: 0.00385191   # slight asymmetry between motors is normal
+    vel_lpf_alpha: 0.05
+    bemf_offset: -20.2116
+    static_friction_pct: 11
