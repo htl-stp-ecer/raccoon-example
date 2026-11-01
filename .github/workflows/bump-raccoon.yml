@@ -1,0 +1,150 @@
+name: Bump raccoon pins
+
+# raccoon-cli and raccoon-library are released independently, so each release
+# moves only its own pin. The pins live in pyproject.toml on the template
+# branches (differential, mecanum); every bump becomes a pull request against
+# the branch it changes.
+#
+# This workflow lives on main on purpose: repository_dispatch only runs
+# workflows from the default branch, and anything under .github/ in a template
+# branch would be copied into every project created with raccoon-setup.
+#
+# Triggered by raccoon-cli ("cli-released") and raccoon-lib ("lib-released")
+# after their PyPI upload, or by hand.
+
+on:
+  repository_dispatch:
+    types: [cli-released, lib-released]
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Which pin to move
+        type: choice
+        options: [raccoon-cli, raccoon-library]
+        required: true
+      version:
+        description: Version to pin (empty = latest on PyPI)
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: [differential, mecanum]
+
+    steps:
+      - name: Work out package and version
+        id: what
+        env:
+          EVENT: ${{ github.event_name }}
+          ACTION: ${{ github.event.action }}
+          PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
+          INPUT_PACKAGE: ${{ inputs.package }}
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = repository_dispatch ]; then
+            case "$ACTION" in
+              cli-released) pkg=raccoon-cli ;;
+              lib-released) pkg=raccoon-library ;;
+              *) echo "::error::unexpected event $ACTION"; exit 1 ;;
+            esac
+            version="$PAYLOAD_VERSION"
+          else
+            pkg="$INPUT_PACKAGE"
+            version="$INPUT_VERSION"
+          fi
+          if [ -z "$version" ]; then
+            version=$(curl -fsS "https://pypi.org/pypi/$pkg/json" \
+              | python3 -c 'import json, sys; print(json.load(sys.stdin)["info"]["version"])')
+          fi
+          if ! [[ "$version" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+            echo "::error::'$version' is not a plain version number"
+            exit 1
+          fi
+          echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Wait until the version is on PyPI
+        env:
+          PKG: ${{ steps.what.outputs.pkg }}
+          VERSION: ${{ steps.what.outputs.version }}
+        run: |
+          for _ in $(seq 1 40); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/$PKG/$VERSION/json")
+            if [ "$code" = 200 ]; then
+              echo "$PKG $VERSION is on PyPI"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::$PKG $VERSION is not on PyPI after 10 minutes"
+          exit 1
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: Move the pin
+        id: bump
+        env:
+          PKG: ${{ steps.what.outputs.pkg }}
+          VERSION: ${{ steps.what.outputs.version }}
+        run: |
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import re
+
+          pkg = os.environ["PKG"]
+          new = os.environ["VERSION"]
+
+          def key(version):
+              return tuple(int(part) for part in version.split("."))
+
+          path = pathlib.Path("pyproject.toml")
+          text = path.read_text()
+          # Matches the pin and the commented-out simulator line, e.g.
+          #   "raccoon-library==148"   and   # "raccoon-library[sim]==148"
+          pin = re.compile(r"(" + re.escape(pkg) + r"(?:\[[a-z]+\])?==)([0-9][0-9.]*)")
+          found = pin.findall(text)
+          if not found:
+              raise SystemExit(f"no pin for {pkg} in pyproject.toml")
+          old = found[0][1]
+          if key(new) <= key(old):
+              print(f"{pkg} is already at {old}, nothing to do for {new}")
+              open(os.environ["GITHUB_OUTPUT"], "a").write("changed=false\n")
+              raise SystemExit(0)
+          path.write_text(pin.sub(lambda m: m.group(1) + new, text))
+          print(f"{pkg}: {old} -> {new}")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write("changed=true\n")
+              out.write(f"old={old}\n")
+          PY
+
+      - name: Open the pull request
+        if: steps.bump.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          # A pull request opened with the default token does not start other
+          # workflows; GH_PAT does. Falls back to the default token without it.
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          base: ${{ matrix.branch }}
+          branch: bump/${{ steps.what.outputs.pkg }}-${{ matrix.branch }}
+          delete-branch: true
+          commit-message: Bump ${{ steps.what.outputs.pkg }} to ${{ steps.what.outputs.version }}
+          title: Bump ${{ steps.what.outputs.pkg }} to ${{ steps.what.outputs.version }} (${{ matrix.branch }})
+          body: |
+            Moves the `${{ steps.what.outputs.pkg }}` pin in `pyproject.toml` from
+            `${{ steps.bump.outputs.old }}` to `${{ steps.what.outputs.version }}` on the
+            `${{ matrix.branch }}` template.
+
+            Opened automatically after the release. `raccoon-cli` and `raccoon-library`
+            are bumped independently of each other. Try the template with the new
+            version before merging.
