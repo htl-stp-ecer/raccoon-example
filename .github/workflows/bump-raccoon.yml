@@ -128,13 +128,26 @@ jobs:
               out.write(f"old={old}\n")
           PY
 
+      # A pull request opened with the default token does not start other
+      # workflows (no checks on the PR). The app token does, and the PR comes
+      # from raccoon-os-bot.
+      - name: Create an app token
+        id: app-token
+        if: steps.bump.outputs.changed == 'true'
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          owner: htl-stp-ecer
+          repositories: raccoon-example
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Open the pull request
         if: steps.bump.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          # A pull request opened with the default token does not start other
-          # workflows; GH_PAT does. Falls back to the default token without it.
-          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           base: ${{ matrix.branch }}
           branch: bump/${{ steps.what.outputs.pkg }}-${{ matrix.branch }}
           delete-branch: true
