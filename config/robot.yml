@@ -7,9 +7,6 @@ drive:
     wheelbase: 0.165       # metres — distance between left and right wheel contact points
     left_motor: left_motor
     right_motor: right_motor
-    # Scale applied to commanded chassis velocity, determined by autotune.
-    velocity_command_gain:
-      vx: 2.93306
 
   # Chassis-level velocity controller.
   # These values are produced by `raccoon calibrate` — run it once per robot to
