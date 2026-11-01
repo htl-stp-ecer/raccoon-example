@@ -8,8 +8,8 @@ dependencies = [
     # `raccoon-library` is the runtime imported as `import raccoon`.
     # The optional [sim] extra pulls in the desktop simulator (no Wombat needed).
     "raccoon-cli==171",
-    "raccoon-library==148",
-    # "raccoon-library[sim]==148",   # uncomment to run the simulator locally
+    "raccoon-library==153",
+    # "raccoon-library[sim]==153",   # uncomment to run the simulator locally
 ]
 
 [project.scripts]
