@@ -55,14 +55,14 @@ irm https://raw.githubusercontent.com/htl-stp-ecer/raccoon-example/main/raccoon-
 It will:
 
 1. Install **git** and **uv** if they are missing
-2. Ask for a **project name** and a **drivetrain type** (`differential` or `mecanum`)
+2. Ask for a **project name** and a **drivetrain type** (`d` for differential, `m` for mecanum; the full words work too)
 3. Clone the matching branch of this repository into a new folder named after your project
    (it aborts if the folder is not writable or the name is already taken)
 4. Rename the project in `pyproject.toml` and `raccoon.project.yml`
 5. Replace the example's git history with a fresh repository and give the project its own
    unique `uuid`
 6. Run `uv sync` to create the virtual environment
-7. Create the first commit, titled *Initial Commit (created by raccoon-setup)*
+7. Create the first commit, titled *Initial Commit*
 
 Afterwards, activate the virtual environment, connect to your Wombat and run:
 

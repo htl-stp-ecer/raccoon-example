@@ -57,8 +57,10 @@ function Invoke-RaccoonSetup {
         Fail "name must start with a letter and contain only letters, digits, '-' or '_'"
     }
 
-    $type = (Read-Host 'Drivetrain type [differential/mecanum]').Trim().ToLower()
-    if ($type -notin @('differential', 'mecanum')) { Fail "type must be 'differential' or 'mecanum'" }
+    $type = (Read-Host 'Drivetrain type [d]ifferential / [m]ecanum').Trim().ToLower()
+    if     ($type -in @('d', 'differential')) { $type = 'differential' }
+    elseif ($type -in @('m', 'mecanum'))       { $type = 'mecanum' }
+    else   { Fail "type must be 'd' (differential) or 'm' (mecanum)" }
 
     # ── 3. Clone ──────────────────────────────────────────────────────────────
 
@@ -106,7 +108,7 @@ function Invoke-RaccoonSetup {
     Info 'Creating the initial commit'
     Invoke-Native git add -A
     # Always author the first commit as raccoon-setup, whatever the local git identity is.
-    Invoke-Native git -c user.name=raccoon-setup -c user.email=raccoon-setup@localhost commit -q -m 'Initial Commit (created by raccoon-setup)'
+    Invoke-Native git -c user.name=raccoon-setup -c user.email=raccoon-setup@localhost commit -q -m 'Initial Commit'
 
     Info 'Done! Next steps:'
     Write-Host "    cd $name"

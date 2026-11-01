@@ -5,7 +5,7 @@
 #
 # What it does:
 #   1. installs git and uv if they are missing
-#   2. asks for a project name and drivetrain type (differential / mecanum)
+#   2. asks for a project name and drivetrain type (d = differential, m = mecanum)
 #   3. clones the matching branch of the example repo into ./<project name>
 #   4. renames the project in pyproject.toml and raccoon.project.yml
 #   5. replaces the example's .git with a fresh repository and a fresh project uuid
@@ -59,11 +59,12 @@ if [[ ! "$NAME" =~ ^[A-Za-z][A-Za-z0-9_-]*$ ]]; then
     die "name must start with a letter and contain only letters, digits, '-' or '_'"
 fi
 
-TYPE="$(ask "Drivetrain type [differential/mecanum]: ")"
+TYPE="$(ask "Drivetrain type [d]ifferential / [m]ecanum: ")"
 TYPE="$(tr '[:upper:]' '[:lower:]' <<< "$TYPE")"
 case "$TYPE" in
-    differential|mecanum) ;;
-    *) die "type must be 'differential' or 'mecanum'" ;;
+    d|differential) TYPE="differential" ;;
+    m|mecanum)      TYPE="mecanum" ;;
+    *) die "type must be 'd' (differential) or 'm' (mecanum)" ;;
 esac
 
 # ── 3. Clone ──────────────────────────────────────────────────────────────────
@@ -111,7 +112,7 @@ uv sync
 info "Creating the initial commit"
 git add -A
 # Always author the first commit as raccoon-setup, whatever the local git identity is.
-git -c user.name="raccoon-setup" -c user.email="raccoon-setup@localhost" commit -q -m "Initial Commit (created by raccoon-setup)"
+git -c user.name="raccoon-setup" -c user.email="raccoon-setup@localhost" commit -q -m "Initial Commit"
 
 info "Done! Next steps:"
 echo "    cd $NAME"
