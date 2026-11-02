@@ -1,139 +1,144 @@
 name: Bump raccoon pins
 
-# raccoon-cli and raccoon-library are released independently, so each release
-# moves only its own pin. The pins live in pyproject.toml on the template
-# branches (differential, mecanum); every bump becomes a pull request against
-# the branch it changes.
+# The raccoon-cli and raccoon-library pins of the template branches (differential,
+# mecanum) move together, and only when a bundle is made: the Create Bundle
+# workflow in raccoon-image sends "bundle-released" with the versions of the
+# bundle. Nothing else moves the pins (the old cli-released / lib-released
+# triggers are gone).
+#
+# One pull request per template branch (bump/raccoon-pins-<branch>) that moves
+# both pins to exactly the bundle's versions, also when they are older than the
+# current ones: the bundle is the tested truth. A new run updates the open pull
+# request instead of opening another one.
 #
 # This workflow lives on main on purpose: repository_dispatch only runs
 # workflows from the default branch, and anything under .github/ in a template
 # branch would be copied into every project created with raccoon-setup.
 #
-# Triggered by raccoon-cli ("cli-released") and raccoon-lib ("lib-released")
-# after their PyPI upload, or by hand.
+# By hand: give both versions, or leave them empty for the newest on PyPI.
 
 on:
   repository_dispatch:
-    types: [cli-released, lib-released]
+    types: [bundle-released]
   workflow_dispatch:
     inputs:
-      package:
-        description: Which pin to move
-        type: choice
-        options: [raccoon-cli, raccoon-library]
-        required: true
-      version:
-        description: Version to pin (empty = latest on PyPI)
+      cli_version:
+        description: raccoon-cli version to pin (empty = latest on PyPI)
+        required: false
+      lib_version:
+        description: raccoon-library version to pin (empty = latest on PyPI)
         required: false
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
-  bump:
+  versions:
+    name: Resolve versions
     runs-on: ubuntu-latest
+    outputs:
+      cli: ${{ steps.what.outputs.cli }}
+      lib: ${{ steps.what.outputs.lib }}
+      bundle: ${{ steps.what.outputs.bundle }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+
+      - name: Work out the versions
+        id: what
+        env:
+          EVENT: ${{ github.event_name }}
+          PAYLOAD_BUNDLE: ${{ github.event.client_payload.bundle }}
+          PAYLOAD_CLI: ${{ github.event.client_payload.cli }}
+          PAYLOAD_LIB: ${{ github.event.client_payload.lib }}
+          INPUT_CLI: ${{ inputs.cli_version }}
+          INPUT_LIB: ${{ inputs.lib_version }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          import urllib.request
+
+          sys.path.insert(0, "scripts")
+          from bump_pins import normalize_version
+
+          def latest(package):
+              with urllib.request.urlopen(f"https://pypi.org/pypi/{package}/json") as response:
+                  return json.load(response)["info"]["version"]
+
+          if os.environ["EVENT"] == "repository_dispatch":
+              cli, lib = os.environ["PAYLOAD_CLI"], os.environ["PAYLOAD_LIB"]
+              bundle = os.environ["PAYLOAD_BUNDLE"]
+          else:
+              cli = os.environ["INPUT_CLI"] or latest("raccoon-cli")
+              lib = os.environ["INPUT_LIB"] or latest("raccoon-library")
+              bundle = ""
+          cli, lib = normalize_version(cli), normalize_version(lib)
+          # The bundle name ends up in a title and a branch body only.
+          import re
+          if bundle and not re.fullmatch(r"\d{4}\.\d{2}\.\d{2}(-\d+)?", bundle):
+              raise SystemExit(f"::error::'{bundle}' is not a bundle name")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"cli={cli}\nlib={lib}\nbundle={bundle}\n")
+          print(f"raccoon-cli {cli}, raccoon-library {lib}, bundle {bundle or '(none)'}")
+          PY
+
+      - name: Wait until both versions are on PyPI
+        env:
+          CLI: ${{ steps.what.outputs.cli }}
+          LIB: ${{ steps.what.outputs.lib }}
+        run: |
+          for pair in "raccoon-cli $CLI" "raccoon-library $LIB"; do
+            set -- $pair
+            ok=false
+            for _ in $(seq 1 40); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/$1/$2/json")
+              if [ "$code" = 200 ]; then ok=true; echo "$1 $2 is on PyPI"; break; fi
+              sleep 15
+            done
+            if [ "$ok" != true ]; then
+              echo "::error::$1 $2 is not on PyPI after 10 minutes"
+              exit 1
+            fi
+          done
+
+  bump:
+    needs: versions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
         branch: [differential, mecanum]
 
     steps:
-      - name: Work out package and version
-        id: what
-        env:
-          EVENT: ${{ github.event_name }}
-          ACTION: ${{ github.event.action }}
-          PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
-          INPUT_PACKAGE: ${{ inputs.package }}
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          set -euo pipefail
-          if [ "$EVENT" = repository_dispatch ]; then
-            case "$ACTION" in
-              cli-released) pkg=raccoon-cli ;;
-              lib-released) pkg=raccoon-library ;;
-              *) echo "::error::unexpected event $ACTION"; exit 1 ;;
-            esac
-            version="$PAYLOAD_VERSION"
-          else
-            pkg="$INPUT_PACKAGE"
-            version="$INPUT_VERSION"
-          fi
-          if [ -z "$version" ]; then
-            version=$(curl -fsS "https://pypi.org/pypi/$pkg/json" \
-              | python3 -c 'import json, sys; print(json.load(sys.stdin)["info"]["version"])')
-          fi
-          if ! [[ "$version" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
-            echo "::error::'$version' is not a plain version number"
-            exit 1
-          fi
-          echo "pkg=$pkg" >> "$GITHUB_OUTPUT"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Wait until the version is on PyPI
-        env:
-          PKG: ${{ steps.what.outputs.pkg }}
-          VERSION: ${{ steps.what.outputs.version }}
-        run: |
-          for _ in $(seq 1 40); do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "https://pypi.org/pypi/$PKG/$VERSION/json")
-            if [ "$code" = 200 ]; then
-              echo "$PKG $VERSION is on PyPI"
-              exit 0
-            fi
-            sleep 15
-          done
-          echo "::error::$PKG $VERSION is not on PyPI after 10 minutes"
-          exit 1
+      # The tools come from main, the template from its own branch; separate
+      # paths so neither checkout touches the other.
+      - uses: actions/checkout@v4
+        with:
+          path: tools
+          sparse-checkout: scripts
 
       - uses: actions/checkout@v4
         with:
           ref: ${{ matrix.branch }}
+          path: template
 
-      - name: Move the pin
+      - name: Move the pins
         id: bump
-        env:
-          PKG: ${{ steps.what.outputs.pkg }}
-          VERSION: ${{ steps.what.outputs.version }}
         run: |
-          python3 - <<'PY'
-          import os
-          import pathlib
-          import re
-
-          pkg = os.environ["PKG"]
-          new = os.environ["VERSION"]
-
-          def key(version):
-              return tuple(int(part) for part in version.split("."))
-
-          path = pathlib.Path("pyproject.toml")
-          text = path.read_text()
-          # Matches the pin and the commented-out simulator line, e.g.
-          #   "raccoon-library==148"   and   # "raccoon-library[sim]==148"
-          pin = re.compile(r"(" + re.escape(pkg) + r"(?:\[[a-z]+\])?==)([0-9][0-9.]*)")
-          found = pin.findall(text)
-          if not found:
-              raise SystemExit(f"no pin for {pkg} in pyproject.toml")
-          old = found[0][1]
-          if key(new) <= key(old):
-              print(f"{pkg} is already at {old}, nothing to do for {new}")
-              open(os.environ["GITHUB_OUTPUT"], "a").write("changed=false\n")
-              raise SystemExit(0)
-          path.write_text(pin.sub(lambda m: m.group(1) + new, text))
-          print(f"{pkg}: {old} -> {new}")
-          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
-              out.write("changed=true\n")
-              out.write(f"old={old}\n")
-          PY
+          python3 tools/scripts/bump_pins.py --pyproject template/pyproject.toml \
+            --cli "${{ needs.versions.outputs.cli }}" --lib "${{ needs.versions.outputs.lib }}"
 
       # A pull request opened with the default token does not start other
       # workflows (no checks on the PR). The app token does, and the PR comes
       # from raccoon-os-bot.
       - name: Create an app token
         id: app-token
-        if: steps.bump.outputs.changed == 'true'
         uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ vars.BOT_APP_ID }}
@@ -143,21 +148,66 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
 
-      - name: Open the pull request
-        if: steps.bump.outputs.changed == 'true'
+      # With no change against the branch this closes an already open pull request
+      # of the same branch name instead of leaving it behind.
+      - name: Open or update the pull request
         uses: peter-evans/create-pull-request@v7
         with:
+          path: template
           token: ${{ steps.app-token.outputs.token }}
           base: ${{ matrix.branch }}
-          branch: bump/${{ steps.what.outputs.pkg }}-${{ matrix.branch }}
+          branch: bump/raccoon-pins-${{ matrix.branch }}
           delete-branch: true
-          commit-message: Bump ${{ steps.what.outputs.pkg }} to ${{ steps.what.outputs.version }}
-          title: Bump ${{ steps.what.outputs.pkg }} to ${{ steps.what.outputs.version }} (${{ matrix.branch }})
+          add-paths: pyproject.toml
+          commit-message: >-
+            Bump raccoon pins (cli ${{ needs.versions.outputs.cli }}, library ${{ needs.versions.outputs.lib }})
+          title: >-
+            Bump raccoon pins${{ needs.versions.outputs.bundle && format(' to bundle {0}', needs.versions.outputs.bundle) || '' }}
+            (cli ${{ needs.versions.outputs.cli }}, library ${{ needs.versions.outputs.lib }}) (${{ matrix.branch }})
           body: |
-            Moves the `${{ steps.what.outputs.pkg }}` pin in `pyproject.toml` from
-            `${{ steps.bump.outputs.old }}` to `${{ steps.what.outputs.version }}` on the
-            `${{ matrix.branch }}` template.
+            Moves both pins in `pyproject.toml` on the `${{ matrix.branch }}` template to exactly:
 
-            Opened automatically after the release. `raccoon-cli` and `raccoon-library`
-            are bumped independently of each other. Try the template with the new
-            version before merging.
+            | package | was | now |
+            | --- | --- | --- |
+            | `raccoon-cli` | `${{ steps.bump.outputs.old_cli }}` | `${{ needs.versions.outputs.cli }}` |
+            | `raccoon-library` | `${{ steps.bump.outputs.old_lib }}` | `${{ needs.versions.outputs.lib }}` |
+
+            ${{ needs.versions.outputs.bundle && format('From bundle `{0}`: the versions in a bundle are the tested ones, so the pins are set exactly, also when they are older.', needs.versions.outputs.bundle) || 'Started by hand.' }}
+
+            Opened automatically. A new bundle updates this pull request instead of
+            opening another one. Try the template with the new versions before merging.
+
+  # The pull requests of the old per-package workflow (bump/raccoon-cli-<branch>,
+  # bump/raccoon-library-<branch>) are replaced by the ones above.
+  cleanup:
+    needs: bump
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create an app token
+        id: app-token
+        uses: actions/create-github-app-token@v3
+        with:
+          app-id: ${{ vars.BOT_APP_ID }}
+          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
+          owner: htl-stp-ecer
+          repositories: raccoon-example
+          permission-contents: write
+          permission-pull-requests: write
+
+      - name: Close the superseded pull requests and delete their branches
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          for pkg in raccoon-cli raccoon-library; do
+            for branch in differential mecanum; do
+              old="bump/$pkg-$branch"
+              number=$(gh pr list --head "$old" --state open --json number -q '.[0].number // empty')
+              if [ -n "$number" ]; then
+                gh pr close "$number" --delete-branch \
+                  --comment "Replaced by bump/raccoon-pins-$branch, which moves both pins together."
+              elif gh api "repos/$GH_REPO/git/ref/heads/$old" >/dev/null 2>&1; then
+                gh api -X DELETE "repos/$GH_REPO/git/refs/heads/$old"
+              fi
+            done
+          done
