@@ -6,10 +6,10 @@ name: Bump raccoon pins
 # bundle. Nothing else moves the pins (the old cli-released / lib-released
 # triggers are gone).
 #
-# One pull request per template branch (bump/raccoon-pins-<branch>) that moves
-# both pins to exactly the bundle's versions, also when they are older than the
-# current ones: the bundle is the tested truth. A new run updates the open pull
-# request instead of opening another one.
+# Each template branch gets one commit that moves both pins to exactly the
+# bundle's versions, also when they are older than the current ones: the bundle
+# is the tested truth. The commit is pushed straight to the branch (no pull
+# request); a run without a change commits nothing.
 #
 # This workflow lives on main on purpose: repository_dispatch only runs
 # workflows from the default branch, and anything under .github/ in a template
@@ -123,20 +123,8 @@ jobs:
           path: tools
           sparse-checkout: scripts
 
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ matrix.branch }}
-          path: template
-
-      - name: Move the pins
-        id: bump
-        run: |
-          python3 tools/scripts/bump_pins.py --pyproject template/pyproject.toml \
-            --cli "${{ needs.versions.outputs.cli }}" --lib "${{ needs.versions.outputs.lib }}"
-
-      # A pull request opened with the default token does not start other
-      # workflows (no checks on the PR). The app token does, and the PR comes
-      # from raccoon-os-bot.
+      # The push comes from raccoon-os-bot with the app token, so checks run on
+      # the new commit (a push with the default token starts no workflows).
       - name: Create an app token
         id: app-token
         uses: actions/create-github-app-token@v3
@@ -146,39 +134,46 @@ jobs:
           owner: htl-stp-ecer
           repositories: raccoon-example
           permission-contents: write
-          permission-pull-requests: write
 
-      # With no change against the branch this closes an already open pull request
-      # of the same branch name instead of leaving it behind.
-      - name: Open or update the pull request
-        uses: peter-evans/create-pull-request@v7
+      - uses: actions/checkout@v4
         with:
+          ref: ${{ matrix.branch }}
           path: template
           token: ${{ steps.app-token.outputs.token }}
-          base: ${{ matrix.branch }}
-          branch: bump/raccoon-pins-${{ matrix.branch }}
-          delete-branch: true
-          add-paths: pyproject.toml
-          commit-message: >-
-            Bump raccoon pins (cli ${{ needs.versions.outputs.cli }}, library ${{ needs.versions.outputs.lib }})
-          title: >-
-            Bump raccoon pins${{ needs.versions.outputs.bundle && format(' to bundle {0}', needs.versions.outputs.bundle) || '' }}
-            (cli ${{ needs.versions.outputs.cli }}, library ${{ needs.versions.outputs.lib }}) (${{ matrix.branch }})
-          body: |
-            Moves both pins in `pyproject.toml` on the `${{ matrix.branch }}` template to exactly:
 
-            | package | was | now |
-            | --- | --- | --- |
-            | `raccoon-cli` | `${{ steps.bump.outputs.old_cli }}` | `${{ needs.versions.outputs.cli }}` |
-            | `raccoon-library` | `${{ steps.bump.outputs.old_lib }}` | `${{ needs.versions.outputs.lib }}` |
+      - name: Move the pins
+        id: bump
+        run: |
+          python3 tools/scripts/bump_pins.py --pyproject template/pyproject.toml \
+            --cli "${{ needs.versions.outputs.cli }}" --lib "${{ needs.versions.outputs.lib }}"
 
-            ${{ needs.versions.outputs.bundle && format('From bundle `{0}`: the versions in a bundle are the tested ones, so the pins are set exactly, also when they are older.', needs.versions.outputs.bundle) || 'Started by hand.' }}
+      - name: Commit and push to the branch
+        working-directory: template
+        env:
+          BRANCH: ${{ matrix.branch }}
+          BUNDLE: ${{ needs.versions.outputs.bundle }}
+          CLI: ${{ needs.versions.outputs.cli }}
+          LIB: ${{ needs.versions.outputs.lib }}
+        run: |
+          if git diff --quiet -- pyproject.toml; then
+            echo "Pins on $BRANCH already match, nothing to commit."
+            exit 0
+          fi
+          git config user.name  "raccoon-os-bot[bot]"
+          git config user.email "raccoon-os-bot[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "chore: bump raccoon pins${BUNDLE:+ to bundle $BUNDLE} (cli $CLI, library $LIB)"
+          # Someone may have pushed to the branch meanwhile: take it in and retry.
+          for attempt in 1 2 3; do
+            if git push origin "HEAD:$BRANCH"; then exit 0; fi
+            echo "push rejected (attempt $attempt), retrying"
+            git pull --rebase origin "$BRANCH"
+          done
+          echo "::error::could not push the pins to $BRANCH after 3 attempts"
+          exit 1
 
-            Opened automatically. A new bundle updates this pull request instead of
-            opening another one. Try the template with the new versions before merging.
-
-  # The pull requests of the old per-package workflow (bump/raccoon-cli-<branch>,
-  # bump/raccoon-library-<branch>) are replaced by the ones above.
+  # Bump pull requests of earlier versions of this workflow (per package, or one
+  # per branch) are no longer used; close what is still open.
   cleanup:
     needs: bump
     runs-on: ubuntu-latest
@@ -199,13 +194,13 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          for pkg in raccoon-cli raccoon-library; do
+          for pkg in raccoon-cli raccoon-library raccoon-pins; do
             for branch in differential mecanum; do
               old="bump/$pkg-$branch"
               number=$(gh pr list --head "$old" --state open --json number -q '.[0].number // empty')
               if [ -n "$number" ]; then
                 gh pr close "$number" --delete-branch \
-                  --comment "Replaced by bump/raccoon-pins-$branch, which moves both pins together."
+                  --comment "The pins are now committed straight to $branch when a bundle is made; no pull requests anymore."
               elif gh api "repos/$GH_REPO/git/ref/heads/$old" >/dev/null 2>&1; then
                 gh api -X DELETE "repos/$GH_REPO/git/refs/heads/$old"
               fi
