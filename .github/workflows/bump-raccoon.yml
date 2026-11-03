@@ -171,38 +171,3 @@ jobs:
           done
           echo "::error::could not push the pins to $BRANCH after 3 attempts"
           exit 1
-
-  # Bump pull requests of earlier versions of this workflow (per package, or one
-  # per branch) are no longer used; close what is still open.
-  cleanup:
-    needs: bump
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create an app token
-        id: app-token
-        uses: actions/create-github-app-token@v3
-        with:
-          app-id: ${{ vars.BOT_APP_ID }}
-          private-key: ${{ secrets.BOT_PRIVATE_KEY }}
-          owner: htl-stp-ecer
-          repositories: raccoon-example
-          permission-contents: write
-          permission-pull-requests: write
-
-      - name: Close the superseded pull requests and delete their branches
-        env:
-          GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          for pkg in raccoon-cli raccoon-library raccoon-pins; do
-            for branch in differential mecanum; do
-              old="bump/$pkg-$branch"
-              number=$(gh pr list --head "$old" --state open --json number -q '.[0].number // empty')
-              if [ -n "$number" ]; then
-                gh pr close "$number" --delete-branch \
-                  --comment "The pins are now committed straight to $branch when a bundle is made; no pull requests anymore."
-              elif gh api "repos/$GH_REPO/git/ref/heads/$old" >/dev/null 2>&1; then
-                gh api -X DELETE "repos/$GH_REPO/git/refs/heads/$old"
-              fi
-            done
-          done
