@@ -1,6 +1,6 @@
 [project]
 name = "examplebot"
-version = "4.0.0"
+version = "2026.11.07"
 requires-python = "==3.13.*"
 dependencies = [
     # Pin exact versions so every teammate builds against the same toolchain.
