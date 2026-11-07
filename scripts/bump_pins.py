@@ -5,7 +5,9 @@ Used by .github/workflows/bump-raccoon.yml. Both pins are set exactly to the
 given versions, also when that is older than what is pinned now: the bundle is
 the source of truth and its versions are the tested ones.
 
-    bump_pins.py --pyproject pyproject.toml --cli 173 --lib 155
+    bump_pins.py --pyproject pyproject.toml --cli 173 --lib 155 [--bundle 2026.11.07]
+
+With --bundle, the project `version` is set to the bundle name too.
 """
 from __future__ import annotations
 
@@ -16,6 +18,7 @@ import sys
 from pathlib import Path
 
 VERSION = re.compile(r"[0-9]+(\.[0-9]+)*")
+BUNDLE = re.compile(r"\d{4}\.\d{2}\.\d{2}(-\d+)?")
 PACKAGES = {"cli": "raccoon-cli", "lib": "raccoon-library"}
 
 
@@ -38,10 +41,22 @@ def set_pin(text: str, package: str, version: str) -> tuple[str, str]:
     return pin.sub(lambda m: m.group(1) + version, text), found[0][1]
 
 
-def bump(text: str, cli: str, lib: str) -> tuple[str, dict[str, str]]:
+def set_version(text: str, version: str) -> str:
+    """Set `version = "..."` in the [project] table."""
+    if not BUNDLE.fullmatch(version):
+        raise ValueError(f"{version!r} is not a bundle name")
+    match = re.search(r"(?ms)^\[project\]\s*$.*?^(version\s*=\s*)\"[^\"\n]*\"", text)
+    if not match:
+        raise ValueError("no version in the [project] table of pyproject.toml")
+    return text[:match.start(1)] + match.group(1) + f'"{version}"' + text[match.end():]
+
+
+def bump(text: str, cli: str, lib: str, bundle: str = "") -> tuple[str, dict[str, str]]:
     old = {}
     for key, version in (("cli", cli), ("lib", lib)):
         text, old[key] = set_pin(text, PACKAGES[key], normalize_version(version))
+    if bundle:
+        text = set_version(text, bundle)
     return text, old
 
 
@@ -50,10 +65,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--pyproject", required=True, type=Path)
     parser.add_argument("--cli", required=True)
     parser.add_argument("--lib", required=True)
+    parser.add_argument("--bundle", default="", help="bundle name to use as the project version (empty = leave it)")
     args = parser.parse_args(argv)
     try:
         original = args.pyproject.read_text()
-        updated, old = bump(original, args.cli, args.lib)
+        updated, old = bump(original, args.cli, args.lib, args.bundle)
     except (OSError, ValueError) as error:
         print(f"::error::{error}")
         return 1

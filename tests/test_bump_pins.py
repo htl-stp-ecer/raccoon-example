@@ -13,6 +13,7 @@ spec.loader.exec_module(bp)
 
 PYPROJECT = '''[project]
 name = "examplebot"
+version = "4.0.0"
 dependencies = [
     "raccoon-cli==171",
     "raccoon-library==153",
@@ -48,6 +49,19 @@ class BumpTests(unittest.TestCase):
     def test_same_versions_change_nothing(self):
         text, _ = bp.bump(PYPROJECT, "171", "153")
         self.assertEqual(PYPROJECT, text)
+
+    def test_bundle_sets_the_project_version(self):
+        text, _ = bp.bump(PYPROJECT, "171", "153", "2026.11.07-2")
+        self.assertIn('version = "2026.11.07-2"', text)
+        self.assertEqual(PYPROJECT.replace("4.0.0", "2026.11.07-2"), text)
+
+    def test_no_bundle_keeps_the_version(self):
+        text, _ = bp.bump(PYPROJECT, "173", "155")
+        self.assertIn('version = "4.0.0"', text)
+
+    def test_bad_bundle_name_is_rejected(self):
+        with self.assertRaises(ValueError):
+            bp.bump(PYPROJECT, "171", "153", '1"\nx')
 
     def test_missing_pin_is_an_error(self):
         with self.assertRaises(ValueError):

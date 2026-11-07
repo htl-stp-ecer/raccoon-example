@@ -6,6 +6,9 @@ name: Bump raccoon pins
 # bundle. Nothing else moves the pins (the old cli-released / lib-released
 # triggers are gone).
 #
+# The project version in pyproject.toml is set to the bundle name as well (not on
+# a manual run, which has no bundle).
+#
 # Each template branch gets one commit that moves both pins to exactly the
 # bundle's versions, also when they are older than the current ones: the bundle
 # is the tested truth. The commit is pushed straight to the branch (no pull
@@ -145,7 +148,8 @@ jobs:
         id: bump
         run: |
           python3 tools/scripts/bump_pins.py --pyproject template/pyproject.toml \
-            --cli "${{ needs.versions.outputs.cli }}" --lib "${{ needs.versions.outputs.lib }}"
+            --cli "${{ needs.versions.outputs.cli }}" --lib "${{ needs.versions.outputs.lib }}" \
+            --bundle "${{ needs.versions.outputs.bundle }}"
 
       - name: Commit and push to the branch
         working-directory: template
