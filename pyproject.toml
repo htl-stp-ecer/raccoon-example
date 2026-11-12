@@ -1,15 +1,15 @@
 [project]
 name = "examplebot"
-version = "2026.11.07"
+version = "2026.11.12"
 requires-python = "==3.13.*"
 dependencies = [
     # Pin exact versions so every teammate builds against the same toolchain.
     # `raccoon-cli` provides `raccoon run / connect / calibrate / wizard`.
     # `raccoon-library` is the runtime imported as `import raccoon`.
     # The optional [sim] extra pulls in the desktop simulator (no Wombat needed).
-    "raccoon-cli==184",
-    "raccoon-library==158",
-    # "raccoon-library[sim]==158",   # uncomment to run the simulator locally
+    "raccoon-cli==185",
+    "raccoon-library==159",
+    # "raccoon-library[sim]==159",   # uncomment to run the simulator locally
 ]
 
 [project.scripts]
