@@ -17,7 +17,7 @@
 
 ---
 
-> **You are on the `differential` branch** of raccoon-example. The example robot comes in two
+> **You are on the `mecanum` branch** of raccoon-example. The example robot comes in two
 > variants, each on its own branch: [`differential`](https://github.com/htl-stp-ecer/raccoon-example/tree/differential)
 > (two-wheeled) and [`mecanum`](https://github.com/htl-stp-ecer/raccoon-example/tree/mecanum)
 > (four-wheeled). The [`main`](https://github.com/htl-stp-ecer/raccoon-example/tree/main)
@@ -121,7 +121,7 @@ Flow for a new feature: **mission → step → service**.
 | `config/robot.yml` | Kinematics, PID gains, axis constraints, physical geometry |
 | `config/run-configurations.yml` | Named run profiles + env flags (`RACCOON_CMD_TRACE`, …) |
 | *(generated)* `hardware/defs.py` | `Motor`, `IRSensor`, `SensorGroup`, `ServoPreset` with named positions — built from `hardware.yml` / `motors.yml` / `servos.yml` |
-| *(generated)* `hardware/robot.py` | `DifferentialKinematics`, platform-managed `odometry`, `UnifiedMotionPidConfig`, mission list — built from `robot.yml` / `missions.yml` |
+| *(generated)* `hardware/robot.py` | `MecanumKinematics`, platform-managed `odometry`, `UnifiedMotionPidConfig`, mission list — built from `robot.yml` / `missions.yml` |
 | `mission_params.py` | `ParamSet` / `NumberParam` — table-side tuning (`.ask()` / `.get()`) |
 | `m000_setup_mission.py` | setup timer, `run_unless_no_calibrate`, `collect_drive` + `calibration_gate` |
 | `m010_navigate…` | `mark_heading_reference()`, `parallel()`, `drive_forward(until=…)`, compound conditions |
@@ -169,7 +169,7 @@ to build by hand.
 <summary>Setting it up manually instead</summary>
 
 ```bash
-git clone -b differential --single-branch https://github.com/htl-stp-ecer/raccoon-example.git
+git clone -b mecanum --single-branch https://github.com/htl-stp-ecer/raccoon-example.git
 cd raccoon-example
 uv sync
 ```
@@ -227,21 +227,25 @@ deviations at the start of every run.
 
 ### Motion constraints (`config/robot.yml`)
 
-The `linear` / `angular` blocks under `motion_pid` set top speed and braking profile.
-**These must not be zero** — a missing or zero `max_velocity` makes the robot sit still
-even when commanded to move. `raccoon calibrate` measures and writes these for you.
+The `linear` / `lateral` / `angular` blocks under `motion_pid` set top speed and braking
+profile. **These must not be zero** — a missing or zero `max_velocity` makes the robot sit
+still even when commanded to move (for `lateral`, `strafe_left/right` won't move).
+`raccoon calibrate` measures and writes these for you.
 
-### Differential notes
+### Mecanum notes
 
-This branch is the **differential** variant (the `mecanum` branch is the four-wheel one).
-The drivetrain is defined in `config/robot.yml` (`type: differential`). Its `wheelbase` is
-the distance between the left and right wheel contact points (what other drivetrains
-call the track width), in meters. The two motors are in `config/motors.yml`.
+This branch is the **mecanum** variant (the `differential` branch is the two-wheel one).
+The drivetrain is defined in `config/robot.yml` (`type: mecanum`, `track_width` =
+left-to-right, `wheelbase` = front-to-back, both in meters) and the four motors in `config/motors.yml`
+(`front_left` 0, `front_right` 1, `rear_left` 2, `rear_right` 3).
 
 If the robot drives wrongly the first time, test one wheel at a time (BotUI > Motors):
-both wheels should spin **forward** for a positive command. A wheel that spins backwards
-needs its `inverted:` flag flipped. A robot that spins instead of driving straight has
-one inverted flag wrong.
+every wheel should spin **forward** for a positive command. A wheel that spins backwards
+needs its `inverted:` flag flipped. Mixed-up ports show up as the robot turning or
+strafing when told to drive straight.
+
+Mecanum adds `strafe_left(...)` / `strafe_right(...)`, and the setup mission calibrates
+the lateral axis too.
 
 ---
 
