@@ -1,0 +1,15 @@
+arm_servo:
+  type: Servo
+  port: 0
+  offset: 0
+  positions:
+    up: 20
+    hold: 90
+    down: 160
+claw_servo:
+  type: Servo
+  port: 1
+  offset: 0
+  positions:
+    open: 40
+    closed: 150

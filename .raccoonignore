@@ -1,0 +1,16 @@
+# Files matched here are NOT uploaded to the Wombat by `raccoon run`.
+# Keeps deploys fast and avoids shipping local-only clutter to the Pi.
+# Same glob syntax as .gitignore.
+
+.git
+.idea
+.vscode
+__pycache__
+.venv
+.pytest_cache
+
+# Local recordings / debug artifacts that only make sense on the dev machine
+*.log
+*.mcap
+debug_frames
+detection_debug

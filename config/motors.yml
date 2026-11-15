@@ -1,0 +1,44 @@
+# Motor configuration for ExampleBot (differential drivetrain).
+#
+# ticks_to_rad: how many radians one encoder tick represents.
+#   Formula: ticks_to_rad = (2 * pi) / ticks_per_revolution
+#   Ticks per revolution = raw encoder ticks observed when the WHEEL (not motor shaft)
+#   completes one full rotation. For raccoonOS motors this is typically ~360 000 – 420 000,
+#   giving ticks_to_rad values in the range 1.5e-05 – 1.75e-05.
+#
+#   Common mistake: entering the raw tick count (e.g. 400000) as ticks_to_rad
+#   instead of computing 2π/400000 ≈ 1.57e-05. That makes the controller think
+#   every tick moves the wheel by 400 000 radians and the robot will not move.
+#
+#   To measure your own ticks_per_revolution:
+#     1. Note the encoder position via BotUI > Sensors or raccoon shell.
+#     2. Manually rotate the wheel one full revolution.
+#     3. Note the new encoder position; the difference is ticks_per_revolution.
+#     4. Compute ticks_to_rad = (2 * pi) / ticks_per_revolution.
+#
+# vel_lpf_alpha: low-pass filter strength on the measured wheel velocity.
+#   1.0 = no filtering (raw, noisy). 0.1 = heavy filtering (slow to react).
+#   Leave at 1.0 unless you see noisy velocity readings in the logs.
+#
+# bemf_offset: constant offset of the back-EMF velocity reading, measured by `raccoon calibrate`.
+# static_friction_pct: minimum motor power (%) needed to overcome static friction, also from calibrate.
+
+left_motor:
+  type: Motor
+  port: 0
+  inverted: false
+  calibration:
+    ticks_to_rad: 0.00387913   # measure for your robot
+    vel_lpf_alpha: 0.05
+    bemf_offset: 7.5657
+    static_friction_pct: 13
+
+right_motor:
+  type: Motor
+  port: 1
+  inverted: true
+  calibration:
+    ticks_to_rad: 0.00385191   # slight asymmetry between motors is normal
+    vel_lpf_alpha: 0.05
+    bemf_offset: -20.2116
+    static_friction_pct: 11
